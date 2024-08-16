@@ -1,0 +1,16 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+*.yaml
+*.yml
+
+3p/
+
+.vscode/
+
+log.*
