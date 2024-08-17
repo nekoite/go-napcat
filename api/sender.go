@@ -183,5 +183,5 @@ func (s *Sender) DeleteMsg(messageId int64) (*Resp[utils.Void], error) {
 }
 
 func returnAsType[T any](r IResp, err error) (*Resp[T], error) {
-	return r.(*Resp[T]), err
+	return GetRespAs[T](r), err
 }

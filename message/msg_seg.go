@@ -1,6 +1,8 @@
 package message
 
 import (
+	"reflect"
+
 	"github.com/goccy/go-json"
 	"github.com/tidwall/gjson"
 )
@@ -64,11 +66,19 @@ type BasicFileData struct {
 	Timeout *int   `json:"timeout,omitempty"`
 }
 
+type FileData struct {
+	BasicFileData
+	// Name 文件名【NapCat 扩展】
+	Name string `json:"name,omitempty"`
+}
+
 type FaceData BasicIdData
 
 type ImageData struct {
 	BasicFileData
-	Type string `json:"type,omitempty"`
+	// Summary 自定义显示的文件名【LLOneBot 扩展】
+	Summary string `json:"summary,omitempty"`
+	Type    string `json:"type,omitempty"`
 }
 
 type RecordData struct {
@@ -159,7 +169,6 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	m.Type = MessageType(fields.Get("type").String())
 	switch m.Type {
 	case MessageTypeText:
-		// err = errors2.New("test")
 		d = new(TextData)
 	case MessageTypeFace:
 		d = new(FaceData)
@@ -169,13 +178,29 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 		d = new(RecordData)
 	case MessageTypeVideo:
 		d = new(VideoData)
+	case MessageTypeAt:
+		d = new(AtData)
+	case MessageTypeRps:
+		d = new(BasicIdData)
 	default:
+		d = make(map[string]any)
+		if err := json.Unmarshal([]byte(fields.Get("data").Raw), &d); err != nil {
+			return err
+		}
 		m.Data = d
 		return nil
 	}
-	if err := json.Unmarshal([]byte(fields.Get("data").Raw), d); err != nil {
+	if err := json.Unmarshal([]byte(fields.Get("data").Raw), &d); err != nil {
 		return err
 	}
-	m.Data = d
+	m.Data = reflect.Indirect(reflect.ValueOf(d)).Interface()
 	return nil
+}
+
+func GetMsgData[T any](msg *Message) T {
+	return msg.Data.(T)
+}
+
+func (m *Message) GetTextData() TextData {
+	return GetMsgData[TextData](m)
 }

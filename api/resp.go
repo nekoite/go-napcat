@@ -64,6 +64,14 @@ func (r *Resp[T]) GetData() any {
 	return r.Data
 }
 
+func GetDataAs[T any](r IResp) T {
+	return r.GetData().(T)
+}
+
+func GetRespAs[T any](r IResp) *Resp[T] {
+	return r.(*Resp[T])
+}
+
 func ParseResp(action Action, data map[string]any) (IResp, error) {
 	// status := data["status"].(string)
 	retcode := int(data["retcode"].(float64))
@@ -80,7 +88,11 @@ func ParseResp(action Action, data map[string]any) (IResp, error) {
 	case ActionDeleteMsg:
 		resp = &Resp[utils.Void]{}
 	default:
-		return nil, fmt.Errorf("%w : %s", errors.ErrUnknownAction, action)
+		if act, ok := extActions[action]; ok {
+			resp = act.GetNewResultFunc()
+		} else {
+			resp = &Resp[any]{}
+		}
 	}
 	if err := mapstructure.Decode(data, &resp); err != nil {
 		return nil, err

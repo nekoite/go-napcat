@@ -19,4 +19,9 @@ var (
 	ErrApiResp         = fmt.Errorf("%w: api response", ErrGoNapcat)
 
 	ErrInvalidMessage = fmt.Errorf("%w: invalid message", ErrGoNapcat)
+
+	ErrExtensionAlreadyRegistered = fmt.Errorf("%w: extension already registered", ErrGoNapcat)
+	ErrActionAlreadyRegistered    = fmt.Errorf("%w: action already registered", ErrGoNapcat)
+
+	ErrTypeAssertion = errors.New("type assertion failed")
 )

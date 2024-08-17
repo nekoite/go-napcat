@@ -93,6 +93,20 @@ type IEvent interface {
 	GetSelfId() int64
 	GetEventType() EventType
 
+	AsPrivateMessageEvent() *PrivateMessageEvent
+	AsGroupMessageEvent() *GroupMessageEvent
+	AsNoticeEventGroupUpload() *NoticeEventGroupUpload
+	AsNoticeEventGroupOperation() *NoticeEventGroupOperation
+	AsNoticeEventGroupBan() *NoticeEventGroupBan
+	AsNoticeEventGroupRecall() *NoticeEventGroupRecall
+	AsNoticeEventFriendRecall() *NoticeEventFriendRecall
+	AsNoticeEventFriendAdd() *NoticeEventFriendAdd
+	AsNoticeEventGroupNotify() *NoticeEventGroupNotify
+	AsNoticeEventGroupHonor() *NoticeEventGroupHonor
+	AsFriendRequestEvent() *FriendRequestEvent
+	AsGroupRequestEvent() *GroupRequestEvent
+	AsMetaEvent() *MetaEvent
+
 	PreventDefault()
 
 	isDefaultPrevented() bool
@@ -112,15 +126,15 @@ type BaseEvent struct {
 	wsCli       *ws.Client `json:"-"`
 }
 
-func (e BaseEvent) GetTime() int64 {
+func (e *BaseEvent) GetTime() int64 {
 	return e.Time
 }
 
-func (e BaseEvent) GetSelfId() int64 {
+func (e *BaseEvent) GetSelfId() int64 {
 	return e.SelfId
 }
 
-func (e BaseEvent) GetEventType() EventType {
+func (e *BaseEvent) GetEventType() EventType {
 	return e.EventType
 }
 
@@ -205,6 +219,8 @@ type NoticeEventFriendRecall struct {
 	MessageId int64 `json:"message_id"`
 }
 
+type NoticeEventFriendAdd NoticeEvent
+
 type NoticeEventGroupNotify struct {
 	GroupNoticeEvent
 	TargetId int64 `json:"target_id"`
@@ -288,7 +304,7 @@ func ParseEvent(data []byte) (IEvent, error) {
 				e = new(NoticeEvent)
 			}
 		case NoticeEventTypeFriendAdd:
-			e = new(NoticeEvent)
+			e = new(NoticeEventFriendAdd)
 		default:
 			err = errors.ErrUnknownNoticeEvent
 			e = new(NoticeEvent)
