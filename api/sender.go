@@ -69,7 +69,7 @@ type Sender struct {
 
 type Req struct {
 	id     int64
-	resp   chan map[string]any
+	resp   chan apiResp
 	action Action
 }
 
@@ -77,6 +77,13 @@ type apiReq struct {
 	Action Action `json:"action"`
 	Params any    `json:"params"`
 	Echo   string `json:"echo"`
+}
+
+type apiResp struct {
+	Status  string `json:"status"`
+	Echo    string `json:"echo"`
+	RetCode int    `json:"retcode"`
+	Raw     []byte `json:"-"`
 }
 
 type SendMsgReqParams[T message.SendableMessage] struct {
@@ -97,17 +104,18 @@ func NewSender(conn *ws.Client) *Sender {
 func (s *Sender) NewReq(action Action) *Req {
 	return &Req{
 		id:     s.sendId.Add(1),
-		resp:   make(chan map[string]any, 1),
+		resp:   make(chan apiResp, 1),
 		action: action,
 	}
 }
 
 func (s *Sender) HandleApiResp(resp []byte) error {
-	r := make(map[string]any)
+	var r apiResp
 	if err := json.Unmarshal(resp, &r); err != nil {
 		return err
 	}
-	id, err := strconv.Atoi(r["echo"].(string))
+	r.Raw = resp
+	id, err := strconv.Atoi(r.Echo)
 	if err != nil {
 		return err
 	}
@@ -133,7 +141,7 @@ func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
 	s.conn.Send(raw)
 	resp := <-req.resp
 	s.reqMap.Delete(req.id)
-	return ParseResp(req.action, resp)
+	return parseResp(req.action, resp)
 }
 
 func (s *Sender) SendPrivateMsgString(userId int64, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {
@@ -178,6 +186,12 @@ func (s *Sender) SendMsg(msg any, autoEscape bool) (*Resp[RespDataMessageId], er
 
 func (s *Sender) DeleteMsg(messageId int64) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionDeleteMsg, map[string]any{
+		"message_id": messageId,
+	}))
+}
+
+func (s *Sender) GetMsg(messageId int64) (*Resp[RespDataMessage], error) {
+	return returnAsType[RespDataMessage](s.SendRaw(ActionGetMsg, map[string]any{
 		"message_id": messageId,
 	}))
 }

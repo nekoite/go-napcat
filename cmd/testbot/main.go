@@ -22,13 +22,19 @@ func main() {
 			return
 		}
 		bot.Logger.Info("Sent private message", zap.Any("resp", resp))
-		<-time.After(1 * time.Second)
-		resp2, err := bot.DeleteMsg(resp.Data.MessageId)
+		resp2, err := bot.GetMsg(resp.Data.MessageId)
 		if err != nil {
-			bot.Logger.Error("Failed to delete message", zap.Error(err))
+			bot.Logger.Error("Failed to get message", zap.Error(err))
 			return
 		}
-		bot.Logger.Info("Deleted message", zap.Any("resp", resp2))
+		bot.Logger.Info("Got message", zap.Any("resp", resp2))
+		// <-time.After(1 * time.Second)
+		// resp2, err := bot.DeleteMsg(resp.Data.MessageId)
+		// if err != nil {
+		// 	bot.Logger.Error("Failed to delete message", zap.Error(err))
+		// 	return
+		// }
+		// bot.Logger.Info("Deleted message", zap.Any("resp", resp2))
 	})
 	bot.Start()
 	defer gonapcat.Finalize()

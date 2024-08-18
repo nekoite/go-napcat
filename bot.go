@@ -134,6 +134,10 @@ func (b *Bot) DeleteMsg(messageId int64) (*api.Resp[utils.Void], error) {
 	return b.sender.DeleteMsg(messageId)
 }
 
+func (b *Bot) GetMsg(messageId int64) (*api.Resp[api.RespDataMessage], error) {
+	return b.sender.GetMsg(messageId)
+}
+
 func (b *Bot) onRecvWsMsg(msg []byte) {
 	if utils.IsRawMessageApiResp(msg) {
 		err := b.sender.HandleApiResp(msg)
@@ -142,7 +146,7 @@ func (b *Bot) onRecvWsMsg(msg []byte) {
 		}
 		return
 	}
-	e, err := event.ParseEvent(msg)
+	e, err := event.ParseEvent(msg, b.sender)
 	if err != nil {
 		b.Logger.Error("parse event", zap.Error(err))
 		return

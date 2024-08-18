@@ -1,9 +1,8 @@
 package message
 
 import (
-	"reflect"
-
 	"github.com/goccy/go-json"
+	"github.com/nekoite/go-napcat/utils"
 	"github.com/tidwall/gjson"
 )
 
@@ -193,7 +192,7 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal([]byte(fields.Get("data").Raw), &d); err != nil {
 		return err
 	}
-	m.Data = reflect.Indirect(reflect.ValueOf(d)).Interface()
+	m.Data = utils.DerefAny(d)
 	return nil
 }
 
@@ -203,4 +202,11 @@ func GetMsgData[T any](msg *Message) T {
 
 func (m *Message) GetTextData() TextData {
 	return GetMsgData[TextData](m)
+}
+
+func NewText(text string) Message {
+	return Message{
+		Type: MessageTypeText,
+		Data: TextData{Text: text},
+	}
 }

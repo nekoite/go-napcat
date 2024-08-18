@@ -6,7 +6,7 @@ import (
 	"github.com/nekoite/go-napcat/api"
 	"github.com/nekoite/go-napcat/errors"
 	"github.com/nekoite/go-napcat/message"
-	"github.com/nekoite/go-napcat/ws"
+	"github.com/nekoite/go-napcat/qq"
 	"github.com/tidwall/gjson"
 )
 
@@ -110,6 +110,7 @@ type IEvent interface {
 	PreventDefault()
 
 	isDefaultPrevented() bool
+	setApiSender(*api.Sender)
 }
 
 type IMessageEvent interface {
@@ -122,8 +123,8 @@ type BaseEvent struct {
 	SelfId    int64     `json:"self_id"`
 	EventType EventType `json:"post_type"`
 
-	isPrevented bool       `json:"-"`
-	wsCli       *ws.Client `json:"-"`
+	isPrevented bool        `json:"-"`
+	apiSender   *api.Sender `json:"-"`
 }
 
 func (e *BaseEvent) GetTime() int64 {
@@ -148,6 +149,10 @@ func (e *BaseEvent) isDefaultPrevented() bool {
 	return e.isPrevented
 }
 
+func (e *BaseEvent) setApiSender(s *api.Sender) {
+	e.apiSender = s
+}
+
 type AnonymousData struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
@@ -167,14 +172,14 @@ type MessageEvent struct {
 
 type PrivateMessageEvent struct {
 	MessageEvent
-	Sender message.Sender `json:"sender"`
+	Sender qq.User `json:"sender"`
 }
 
 type GroupMessageEvent struct {
 	MessageEvent
-	GroupId   int64               `json:"group_id"`
-	Anonymous AnonymousData       `json:"anonymous"`
-	Sender    message.GroupSender `json:"sender"`
+	GroupId   int64         `json:"group_id"`
+	Anonymous AnonymousData `json:"anonymous"`
+	Sender    qq.GroupUser  `json:"sender"`
 }
 
 type NoticeEvent struct {
@@ -259,7 +264,7 @@ func (e *MessageEvent) GetMessageEventType() MessageEventType {
 	return e.MessageType
 }
 
-func ParseEvent(data []byte) (IEvent, error) {
+func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {
 	typeInfos := gjson.GetManyBytes(data, "post_type", "message_type", "notice_type", "request_type", "sub_type")
 	var e IEvent
 	var err error
@@ -324,6 +329,7 @@ func ParseEvent(data []byte) (IEvent, error) {
 		err = errors.ErrUnknownEvent
 		e = new(BaseEvent)
 	}
+	e.setApiSender(apiSender)
 	if err := json.Unmarshal(data, e); err != nil {
 		return e, err
 	}

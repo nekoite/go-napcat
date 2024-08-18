@@ -22,7 +22,7 @@ func (mc *Chain) AddMessages(msg ...Message) {
 }
 
 func (mc *Chain) AddText(text string) {
-
+	mc.AddMessages(NewText(text))
 }
 
 func (mc *Chain) AppendChain(chain Chain) {
