@@ -8,6 +8,14 @@ func NewSet[T comparable]() Set[T] {
 	return make(map[T]Void)
 }
 
+func NewSetFrom[T comparable](items ...T) Set[T] {
+	s := make(map[T]Void)
+	for _, item := range items {
+		s[item] = Void{}
+	}
+	return s
+}
+
 func (s Set[T]) Add(item T) {
 	s[item] = Void{}
 }

@@ -22,11 +22,16 @@ func (mc *Chain) AddMessages(msg ...Message) {
 }
 
 func (mc *Chain) AddText(text string) {
-	mc.AddMessages(NewText(text))
+	mc.AddMessages(NewText(text).Message())
 }
 
 func (mc *Chain) AppendChain(chain Chain) {
 	mc.AddMessages(chain.Messages...)
+}
+
+// SetSendAsAnonymous 设置是否匿名发送消息。当 ignore 为 true 时，将在无法匿名发送消息时继续发送消息。
+func (mc *Chain) SetSendAsAnonymous(ignore bool) {
+	mc.AddMessages(NewAnonymous(ignore).Message())
 }
 
 func (mc *Chain) Clear() {

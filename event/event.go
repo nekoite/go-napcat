@@ -108,9 +108,11 @@ type IEvent interface {
 	AsMetaEvent() *MetaEvent
 
 	PreventDefault()
+	GetError() error
 
 	isDefaultPrevented() bool
 	setApiSender(*api.Sender)
+	setError(error)
 }
 
 type IMessageEvent interface {
@@ -125,6 +127,7 @@ type BaseEvent struct {
 
 	isPrevented bool        `json:"-"`
 	apiSender   *api.Sender `json:"-"`
+	error       error       `json:"-"`
 }
 
 func (e *BaseEvent) GetTime() int64 {
@@ -145,12 +148,20 @@ func (e *BaseEvent) PreventDefault() {
 	e.isPrevented = true
 }
 
+func (e *BaseEvent) GetError() error {
+	return e.error
+}
+
 func (e *BaseEvent) isDefaultPrevented() bool {
 	return e.isPrevented
 }
 
 func (e *BaseEvent) setApiSender(s *api.Sender) {
 	e.apiSender = s
+}
+
+func (e *BaseEvent) setError(err error) {
+	e.error = err
 }
 
 type AnonymousData struct {
@@ -329,6 +340,7 @@ func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {
 		err = errors.ErrUnknownEvent
 		e = new(BaseEvent)
 	}
+	e.setError(err)
 	e.setApiSender(apiSender)
 	if err := json.Unmarshal(data, e); err != nil {
 		return e, err

@@ -1,10 +1,12 @@
 package gonapcat
 
 import (
+	errors2 "errors"
 	"fmt"
 
 	"github.com/nekoite/go-napcat/api"
 	"github.com/nekoite/go-napcat/config"
+	"github.com/nekoite/go-napcat/errors"
 	"github.com/nekoite/go-napcat/event"
 	"github.com/nekoite/go-napcat/message"
 	"github.com/nekoite/go-napcat/utils"
@@ -148,8 +150,11 @@ func (b *Bot) onRecvWsMsg(msg []byte) {
 	}
 	e, err := event.ParseEvent(msg, b.sender)
 	if err != nil {
-		b.Logger.Error("parse event", zap.Error(err))
-		return
+		if !errors2.Is(err, errors.ErrGoNapcat) {
+			b.Logger.Error("parse event", zap.Error(err))
+			return
+		}
+		b.Logger.Warn("parse event", zap.Error(err))
 	}
 	b.Logger.Debug("received event", zap.Any("event", e))
 	b.dispatcher.Dispatch(e)

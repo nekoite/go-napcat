@@ -82,7 +82,7 @@ type ImageData struct {
 
 type RecordData struct {
 	BasicFileData
-	Magic *int `json:"magic,omitempty"`
+	Magic int `json:"magic,omitempty"`
 }
 
 type VideoData BasicFileData
@@ -90,6 +90,12 @@ type VideoData BasicFileData
 type AtData struct {
 	QQ string `json:"qq"`
 }
+
+type RpsData utils.Void
+
+type DiceData utils.Void
+
+type ShakeData utils.Void
 
 type PokeData struct {
 	Type string `json:"type"`
@@ -136,17 +142,11 @@ type CustomMusicData struct {
 	Audio string `json:"audio"`
 }
 
-type ReplyData struct {
-	BasicIdData
-}
+type ReplyData BasicIdData
 
-type ForwardData struct {
-	BasicIdData
-}
+type ForwardData BasicIdData
 
-type IdNodeData struct {
-	BasicIdData
-}
+type IdNodeData BasicIdData
 
 type CustomNodeData struct {
 	UserId   int64  `json:"user_id,string"`
@@ -160,6 +160,10 @@ type XmlData struct {
 
 type JsonData struct {
 	Data string `json:"data"`
+}
+
+func (m *Message) GetTextData() TextData {
+	return GetMsgData[TextData](m)
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {
@@ -180,7 +184,45 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	case MessageTypeAt:
 		d = new(AtData)
 	case MessageTypeRps:
-		d = new(BasicIdData)
+		d = new(RpsData)
+	case MessageTypeDice:
+		d = new(DiceData)
+	case MessageTypeShake:
+		d = new(ShakeData)
+	case MessageTypePoke:
+		d = new(PokeData)
+	case MessageTypeAnonymous:
+		d = new(AnonymousData)
+	case MessageTypeShare:
+		d = new(ShareData)
+	case MessageTypeContact:
+		d = new(ContactData)
+	case MessageTypeLocation:
+		d = new(LocationData)
+	case MessageTypeMusic:
+		musicType := MusicType(fields.Get("data").Get("type").String())
+		switch musicType {
+		case MusicTypeCustom:
+			d = new(CustomMusicData)
+		default:
+			d = new(MusicData)
+		}
+	case MessageTypeReply:
+		d = new(ReplyData)
+	case MessageTypeForward:
+		d = new(ForwardData)
+	case MessageTypeNode:
+		hasId := fields.Get("data").Get("id").Exists()
+		if hasId {
+			d = new(IdNodeData)
+		} else {
+			// special handling for custom node
+			return m.unmarshalForCustomNode(&fields)
+		}
+	case MessageTypeXml:
+		d = new(XmlData)
+	case MessageTypeJson:
+		d = new(JsonData)
 	default:
 		d = make(map[string]any)
 		if err := json.Unmarshal([]byte(fields.Get("data").Raw), &d); err != nil {
@@ -196,17 +238,268 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (m *Message) unmarshalForCustomNode(fields *gjson.Result) error {
+	var d CustomNodeData
+	data := fields.Get("data")
+	d.UserId = data.Get("user_id").Int()
+	d.Nickname = data.Get("nickname").String()
+	if data.Get("content").IsArray() {
+		var content Chain
+		if err := json.Unmarshal([]byte(data.Get("content").Raw), &content); err != nil {
+			return err
+		}
+		d.Content = content
+	}
+	m.Data = d
+	return nil
+}
+
 func GetMsgData[T any](msg *Message) T {
 	return msg.Data.(T)
 }
 
-func (m *Message) GetTextData() TextData {
-	return GetMsgData[TextData](m)
+func NewText(text string) TextData {
+	return TextData{Text: text}
 }
 
-func NewText(text string) Message {
+func NewFace(id int64) FaceData {
+	return FaceData{Id: id}
+}
+
+func NewImage(file string) ImageData {
+	return ImageData{BasicFileData: BasicFileData{File: file}}
+}
+
+func NewRecord(file string) RecordData {
+	return RecordData{BasicFileData: BasicFileData{File: file}}
+}
+
+func NewVideo(file string) VideoData {
+	return VideoData{File: file}
+}
+
+func NewAt(qq string) AtData {
+	return AtData{QQ: qq}
+}
+
+func NewRps() RpsData {
+	return RpsData{}
+}
+
+func NewDice() DiceData {
+	return DiceData{}
+}
+
+func NewShake() ShakeData {
+	return ShakeData{}
+}
+
+func NewRpsMessage() Message {
+	return Message{Type: MessageTypeRps}
+}
+
+func NewDiceMessage() Message {
+	return Message{Type: MessageTypeDice}
+}
+
+func NewShakeMessage() Message {
+	return Message{Type: MessageTypeShake}
+}
+
+func NewAnonymous(ignore bool) AnonymousData {
+	return AnonymousData{Ignore: ignore}
+}
+
+func NewShare(title, url string) ShareData {
+	return ShareData{Title: title, Url: url}
+}
+
+func NewContact(t string, id int64) ContactData {
+	return ContactData{Type: t, BasicIdData: BasicIdData{Id: id}}
+}
+
+func NewLocation(lat, lon float64) LocationData {
+	return LocationData{Lat: lat, Lon: lon}
+}
+
+func NewMusic(t MusicType, id int64) MusicData {
+	return MusicData{BasicMusicData: BasicMusicData{Type: t}, BasicIdData: BasicIdData{Id: id}}
+}
+
+func NewCustomMusic(t MusicType, title, url, audio string) CustomMusicData {
+	return CustomMusicData{BasicMusicData: BasicMusicData{Type: t}, Title: title, Url: url, Audio: audio}
+}
+
+func NewReply(id int64) ReplyData {
+	return ReplyData{Id: id}
+}
+
+func NewNode(id int64) IdNodeData {
+	return IdNodeData{Id: id}
+}
+
+func NewCustomNode[T SendableMessage](userId int64, nickname string, content T) CustomNodeData {
+	return CustomNodeData{UserId: userId, Nickname: nickname, Content: content}
+}
+
+func NewXml(data string) XmlData {
+	return XmlData{Data: data}
+}
+
+func NewJson(data string) JsonData {
+	return JsonData{Data: data}
+}
+
+func (d TextData) Message() Message {
 	return Message{
 		Type: MessageTypeText,
-		Data: TextData{Text: text},
+		Data: d,
+	}
+}
+
+func (d FaceData) Message() Message {
+	return Message{
+		Type: MessageTypeFace,
+		Data: d,
+	}
+}
+
+func (d ImageData) Message() Message {
+	return Message{
+		Type: MessageTypeImage,
+		Data: d,
+	}
+}
+
+func (d RecordData) Message() Message {
+	return Message{
+		Type: MessageTypeRecord,
+		Data: d,
+	}
+}
+
+func (d VideoData) Message() Message {
+	return Message{
+		Type: MessageTypeVideo,
+		Data: d,
+	}
+}
+
+func (d AtData) Message() Message {
+	return Message{
+		Type: MessageTypeAt,
+		Data: d,
+	}
+}
+
+func (d RpsData) Message() Message {
+	return Message{
+		Type: MessageTypeRps,
+		Data: d,
+	}
+}
+
+func (d DiceData) Message() Message {
+	return Message{
+		Type: MessageTypeDice,
+		Data: d,
+	}
+}
+
+func (d ShakeData) Message() Message {
+	return Message{
+		Type: MessageTypeShake,
+		Data: d,
+	}
+}
+
+func (d PokeData) Message() Message {
+	return Message{
+		Type: MessageTypePoke,
+		Data: d,
+	}
+}
+
+func (d AnonymousData) Message() Message {
+	return Message{
+		Type: MessageTypeAnonymous,
+		Data: d,
+	}
+}
+
+func (d ShareData) Message() Message {
+	return Message{
+		Type: MessageTypeShare,
+		Data: d,
+	}
+}
+
+func (d ContactData) Message() Message {
+	return Message{
+		Type: MessageTypeContact,
+		Data: d,
+	}
+}
+
+func (d LocationData) Message() Message {
+	return Message{
+		Type: MessageTypeLocation,
+		Data: d,
+	}
+}
+
+func (d MusicData) Message() Message {
+	return Message{
+		Type: MessageTypeMusic,
+		Data: d,
+	}
+}
+
+func (d CustomMusicData) Message() Message {
+	return Message{
+		Type: MessageTypeMusic,
+		Data: d,
+	}
+}
+
+func (d ReplyData) Message() Message {
+	return Message{
+		Type: MessageTypeReply,
+		Data: d,
+	}
+}
+
+func (d ForwardData) Message() Message {
+	return Message{
+		Type: MessageTypeForward,
+		Data: d,
+	}
+}
+
+func (d IdNodeData) Message() Message {
+	return Message{
+		Type: MessageTypeNode,
+		Data: d,
+	}
+}
+
+func (d CustomNodeData) Message() Message {
+	return Message{
+		Type: MessageTypeNode,
+		Data: d,
+	}
+}
+
+func (d XmlData) Message() Message {
+	return Message{
+		Type: MessageTypeXml,
+		Data: d,
+	}
+}
+
+func (d JsonData) Message() Message {
+	return Message{
+		Type: MessageTypeJson,
+		Data: d,
 	}
 }
