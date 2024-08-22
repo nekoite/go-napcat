@@ -1,5 +1,9 @@
 package event
 
+import (
+	"go.uber.org/zap"
+)
+
 // todo: add context?
 
 type Handler func(event IEvent)
@@ -14,14 +18,18 @@ type handlersByType struct {
 }
 
 type Dispatcher struct {
+	logger          *zap.Logger
 	isGoroutineMode bool
 	handlers        handlersByType
+	commandCenter   *CommandCenter
 }
 
-func NewDispatcher(isGoroutineMode bool) *Dispatcher {
+func NewDispatcher(logger *zap.Logger, isGoroutineMode bool) *Dispatcher {
 	return &Dispatcher{
+		logger:          logger.Named("event"),
 		isGoroutineMode: isGoroutineMode,
 		handlers:        handlersByType{},
+		commandCenter:   NewCommandCenter(logger),
 	}
 }
 
@@ -63,7 +71,16 @@ func (d *Dispatcher) Dispatch(event IEvent) {
 
 	switch event.GetEventType() {
 	case EventTypeMessage:
-		met := event.(IMessageEvent).GetMessageEventType()
+		e := event.(IMessageEvent)
+		if d.isGoroutineMode {
+			go d.commandCenter.onMessageRecv(e)
+		} else {
+			d.commandCenter.onMessageRecv(e)
+			if e.isDefaultPrevented() {
+				return
+			}
+		}
+		met := e.GetMessageEventType()
 		if met == MessageEventTypePrivate {
 			for _, handler := range d.handlers.privateMessage {
 				if d.isGoroutineMode {

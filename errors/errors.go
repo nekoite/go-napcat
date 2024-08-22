@@ -18,7 +18,8 @@ var (
 	ErrUnknownAction   = fmt.Errorf("%w: unknown action", ErrGoNapcat)
 	ErrApiResp         = fmt.Errorf("%w: api response", ErrGoNapcat)
 
-	ErrInvalidMessage = fmt.Errorf("%w: invalid message", ErrGoNapcat)
+	ErrInvalidMessage  = fmt.Errorf("%w: invalid message", ErrGoNapcat)
+	ErrInvalidCQString = fmt.Errorf("%w: invalid CQ string", ErrGoNapcat)
 
 	ErrExtensionAlreadyRegistered = fmt.Errorf("%w: extension already registered", ErrGoNapcat)
 	ErrActionAlreadyRegistered    = fmt.Errorf("%w: action already registered", ErrGoNapcat)

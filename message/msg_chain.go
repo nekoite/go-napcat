@@ -6,7 +6,7 @@ import (
 )
 
 type SendableMessage interface {
-	string | Chain
+	string | *Chain
 }
 
 type Chain struct {

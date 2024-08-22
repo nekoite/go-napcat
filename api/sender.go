@@ -178,7 +178,7 @@ func (s *Sender) SendMsg(msg any, autoEscape bool) (*Resp[RespDataMessageId], er
 	switch msg := msg.(type) {
 	case SendMsgReqParams[string]:
 		return returnAsType[RespDataMessageId](s.SendRaw(ActionSendMsg, msg))
-	case SendMsgReqParams[message.Chain]:
+	case SendMsgReqParams[*message.Chain]:
 		return returnAsType[RespDataMessageId](s.SendRaw(ActionSendMsg, msg))
 	}
 	return nil, errors.ErrInvalidMessage

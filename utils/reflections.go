@@ -2,7 +2,7 @@ package utils
 
 import "reflect"
 
-func walkStructWithTag(v reflect.Value, tagPath []reflect.StructTag, f func(value reflect.Value, tagPath []reflect.StructTag)) {
+func walkStructWithTag(v reflect.Value, tagPath []reflect.StructTag, f func(value reflect.Value, tagPath []reflect.StructTag) error) error {
 	switch v.Kind() {
 	case reflect.Struct:
 		t := v.Type()
@@ -10,19 +10,23 @@ func walkStructWithTag(v reflect.Value, tagPath []reflect.StructTag, f func(valu
 			field := v.Field(i)
 			tag := t.Field(i).Tag
 			tagPath = append(tagPath, tag)
-			walkStructWithTag(field, tagPath, f)
+			err := walkStructWithTag(field, tagPath, f)
+			if err != nil {
+				return err
+			}
 			tagPath = tagPath[:len(tagPath)-1]
 		}
 	case reflect.Interface:
-		walkStructWithTag(v.Elem(), tagPath, f)
+		return walkStructWithTag(v.Elem(), tagPath, f)
 	default:
-		f(v, tagPath)
+		return f(v, tagPath)
 	}
+	return nil
 }
 
-func WalkStructWithTag(v any, f func(value reflect.Value, tagPath []reflect.StructTag)) {
+func WalkStructWithTag(v any, f func(value reflect.Value, tagPath []reflect.StructTag) error) error {
 	if v == nil {
-		return
+		return nil
 	}
-	walkStructWithTag(reflect.Indirect(reflect.ValueOf(v)), make([]reflect.StructTag, 1), f)
+	return walkStructWithTag(reflect.Indirect(reflect.ValueOf(v)), make([]reflect.StructTag, 1), f)
 }

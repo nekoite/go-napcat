@@ -3,6 +3,7 @@ package gonapcat
 import (
 	errors2 "errors"
 	"fmt"
+	"time"
 
 	"github.com/nekoite/go-napcat/api"
 	"github.com/nekoite/go-napcat/config"
@@ -20,6 +21,7 @@ type BotLogger struct {
 }
 
 type Bot struct {
+	cfg        *config.BotConfig
 	conn       *ws.Client
 	dispatcher *event.Dispatcher
 	sender     *api.Sender
@@ -30,7 +32,8 @@ type Bot struct {
 func NewBot(cfg *config.BotConfig) *Bot {
 	logger := zap.L().Named(fmt.Sprint(cfg.Id))
 	bot := &Bot{
-		dispatcher: event.NewDispatcher(cfg.UseGoroutine),
+		cfg:        cfg,
+		dispatcher: event.NewDispatcher(logger, cfg.UseGoroutine),
 
 		Logger: &BotLogger{logger: logger},
 	}
@@ -142,7 +145,11 @@ func (b *Bot) GetMsg(messageId int64) (*api.Resp[api.RespDataMessage], error) {
 
 func (b *Bot) onRecvWsMsg(msg []byte) {
 	if utils.IsRawMessageApiResp(msg) {
-		err := b.sender.HandleApiResp(msg)
+		err := utils.TimedFunc(func() error {
+			return b.sender.HandleApiResp(msg)
+		}, func(t time.Duration) {
+			b.Logger.Debug("handle api resp duration", zap.Duration("time", t))
+		})
 		if err != nil {
 			b.Logger.Error("handle api resp", zap.Error(err))
 		}
@@ -157,5 +164,16 @@ func (b *Bot) onRecvWsMsg(msg []byte) {
 		b.Logger.Warn("parse event", zap.Error(err))
 	}
 	b.Logger.Debug("received event", zap.Any("event", e))
-	b.dispatcher.Dispatch(e)
+	utils.TimedAction(func() {
+		b.dispatcher.Dispatch(e)
+	}, func(t time.Duration) {
+		if b.cfg.UseGoroutine {
+			return
+		}
+		if t > 500*time.Millisecond {
+			b.Logger.Warn("event execution duration", zap.Duration("time", t))
+		} else {
+			b.Logger.Debug("event execution duration", zap.Duration("time", t))
+		}
+	})
 }

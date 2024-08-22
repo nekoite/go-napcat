@@ -107,6 +107,8 @@ type IEvent interface {
 	AsGroupRequestEvent() *GroupRequestEvent
 	AsMetaEvent() *MetaEvent
 
+	// PreventDefault 阻止事件继续传播。别问我为什么取这个名字。
+	// 当 BotConfig.UseGoroutine 为 true 时，这个函数无效。
 	PreventDefault()
 	GetError() error
 
@@ -118,6 +120,8 @@ type IEvent interface {
 type IMessageEvent interface {
 	IEvent
 	GetMessageEventType() MessageEventType
+	GetMessage() *message.Chain
+	GetRawMessage() string
 }
 
 type BaseEvent struct {
@@ -142,8 +146,6 @@ func (e *BaseEvent) GetEventType() EventType {
 	return e.EventType
 }
 
-// PreventDefault 阻止事件继续传播。别问我为什么取这个名字。
-// 当 BotConfig.UseGoroutine 为 true 时，这个函数无效。
 func (e *BaseEvent) PreventDefault() {
 	e.isPrevented = true
 }
@@ -176,7 +178,7 @@ type MessageEvent struct {
 	SubType     MessageEventSubtype `json:"sub_type"`
 	MessageId   int32               `json:"message_id"`
 	UserId      int64               `json:"user_id"`
-	Message     message.Chain       `json:"message"`
+	Message     *message.Chain      `json:"message"`
 	RawMessage  string              `json:"raw_message"`
 	Font        int32               `json:"font"`
 }
@@ -273,6 +275,14 @@ type MetaEvent struct {
 
 func (e *MessageEvent) GetMessageEventType() MessageEventType {
 	return e.MessageType
+}
+
+func (e *MessageEvent) GetRawMessage() string {
+	return e.RawMessage
+}
+
+func (e *MessageEvent) GetMessage() *message.Chain {
+	return e.Message
 }
 
 func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {

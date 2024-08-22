@@ -162,6 +162,8 @@ type JsonData struct {
 	Data string `json:"data"`
 }
 
+type UnknownData map[string]any
+
 func (m *Message) GetTextData() TextData {
 	return GetMsgData[TextData](m)
 }
@@ -217,42 +219,44 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 			d = new(IdNodeData)
 		} else {
 			// special handling for custom node
-			return m.unmarshalForCustomNode(&fields)
+			nd := new(CustomNodeData)
+			nd.Content = NewMessageChain()
+			d = nd
 		}
 	case MessageTypeXml:
 		d = new(XmlData)
 	case MessageTypeJson:
 		d = new(JsonData)
 	default:
-		d = make(map[string]any)
+		d = make(UnknownData)
 		if err := json.Unmarshal([]byte(fields.Get("data").Raw), &d); err != nil {
 			return err
 		}
 		m.Data = d
 		return nil
 	}
-	if err := json.Unmarshal([]byte(fields.Get("data").Raw), &d); err != nil {
+	if err := json.Unmarshal([]byte(fields.Get("data").Raw), d); err != nil {
 		return err
 	}
 	m.Data = utils.DerefAny(d)
 	return nil
 }
 
-func (m *Message) unmarshalForCustomNode(fields *gjson.Result) error {
-	var d CustomNodeData
-	data := fields.Get("data")
-	d.UserId = data.Get("user_id").Int()
-	d.Nickname = data.Get("nickname").String()
-	if data.Get("content").IsArray() {
-		var content Chain
-		if err := json.Unmarshal([]byte(data.Get("content").Raw), &content); err != nil {
-			return err
-		}
-		d.Content = content
-	}
-	m.Data = d
-	return nil
-}
+// func (m *Message) unmarshalForCustomNode(fields *gjson.Result) error {
+// 	var d CustomNodeData
+// 	data := fields.Get("data")
+// 	d.UserId = data.Get("user_id").Int()
+// 	d.Nickname = data.Get("nickname").String()
+// 	if data.Get("content").IsArray() {
+// 		var content Chain
+// 		if err := json.Unmarshal([]byte(data.Get("content").Raw), &content); err != nil {
+// 			return err
+// 		}
+// 		d.Content = content
+// 	}
+// 	m.Data = d
+// 	return nil
+// }
 
 func GetMsgData[T any](msg *Message) T {
 	return msg.Data.(T)
