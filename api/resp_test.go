@@ -39,7 +39,7 @@ func TestParseRespActionSendPrivateMsg(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(r)
 	if r0, ok := r.(*Resp[RespDataMessageId]); ok {
-		assert.Equal(int64(123456), r0.Data.MessageId)
+		assert.EqualValues(123456, r0.Data.MessageId)
 	} else {
 		assert.Failf("unexpected type", "%T", r)
 	}
@@ -52,7 +52,7 @@ func TestParseRespActionSendGroupMsg(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(r)
 	if r0, ok := r.(*Resp[RespDataMessageId]); ok {
-		assert.Equal(int64(123456), r0.Data.MessageId)
+		assert.EqualValues(123456, r0.Data.MessageId)
 	} else {
 		assert.Failf("unexpected type", "%T", r)
 	}
@@ -103,7 +103,7 @@ func TestParseRespActionGetMsgPrivate(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(r)
 	if r0, ok := r.(*Resp[RespDataMessage]); ok {
-		assert.Equal(int64(123456), r0.Data.MessageId)
+		assert.EqualValues(123456, r0.Data.MessageId)
 		assert.Equal(int64(123456), r0.Data.RealId)
 		assert.Equal(int64(123456), r0.Data.Time)
 		assert.Equal(MessageTypePrivate, r0.Data.MessageType)
@@ -163,7 +163,7 @@ func TestParseRespActionGetMsgGroup(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(r)
 	if r0, ok := r.(*Resp[RespDataMessage]); ok {
-		assert.Equal(int64(123456), r0.Data.MessageId)
+		assert.EqualValues(123456, r0.Data.MessageId)
 		assert.Equal(int64(123456), r0.Data.RealId)
 		assert.Equal(int64(123456), r0.Data.Time)
 		assert.Equal(MessageTypeGroup, r0.Data.MessageType)

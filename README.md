@@ -4,13 +4,33 @@
 
 带有 NapCat 支持的 OneBot 协议库。
 
-## 事件处理顺序
+> [!NOTE]
+> 项目还处于 v0 阶段，测试不完善，接口不稳定！请谨慎使用。
+
+## 机器人与初始化
+
+首先，使用 `gonapcat.Init(*config.LogConfig)` 进行初始化并配置日志。不要忘记使用 `defer gonapcat.Finalize()` 或在最后调用这个函数来安全退出。
+
+然后，使用 `gonapcat.NewBot(*config.BotConfig)` 创建新的机器人实例。Config 中使用的机器人 QQ 号需要与对应的 NapCat（或 OneBot）客户端上使用的一致。
+
+然后，使用 `bot.RegisterHandler*` 系列方法配置监听器。要开始监听，使用 `bot.Start()`。要停止监听，使用 `bot.Close()`。停止后，无法再重新启动，需要创建新的机器人实例。
+
+> [!CAUTION]
+> `bot.Start()` 是非阻塞的。请使用管道或 `WaitGroup` 阻塞当前 Go 程。
+
+## 事件与指令
+
+### 事件处理顺序
 
 1. 监听所有事件的处理器（HandlerAllTypes）
 2. 指令（Command）- 仅对消息事件有效
 3. 监听各种事件的处理器
 
-## 指令
+### 事件
+
+
+
+### 指令
 
 指令使用 [kong](https://github.com/alecthomas/kong) 处理。处理方式和命令行一样。
 
@@ -36,3 +56,13 @@
 > CQ 码中的引号与转义字符不会有任何影响
 
 `event.ICommand::Preprocess(remaining string)` 接口函数用于对消息在分割之前进行预处理。这里传入的 `remaining` 参数将是除去指令名称的剩余的分割之前的字符串。
+
+## OneBot WebSocket API 调用
+
+API 集成于 `Bot` 对象。返回的是 `*api.Resp[T]`。
+
+### 扩展接口
+
+#### 内置扩展
+
+- NapCat 扩展：`napcat.Extension.Register()`

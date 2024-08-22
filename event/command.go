@@ -55,7 +55,7 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 		return
 	}
 	rawMsg := event.GetRawMessage()
-	cmd, prefix := c.isCommand(rawMsg)
+	cmd, prefix := c.getCommand(rawMsg)
 	if cmd == nil {
 		return
 	}
@@ -85,7 +85,7 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	cmd.OnCommand(parseResult)
 }
 
-func (c *CommandCenter) isCommand(raw string) (ICommand, string) {
+func (c *CommandCenter) getCommand(raw string) (ICommand, string) {
 	pref := getPrefix(raw)
 	if len(pref) == 0 {
 		return nil, ""

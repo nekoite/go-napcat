@@ -3,8 +3,38 @@ package event
 import (
 	"testing"
 
+	"github.com/alecthomas/kong"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
+
+type testCommand struct {
+	name             string
+	splitBySpaceOnly bool
+	onCommand        func(parseResult *ParseResult)
+}
+
+func (c *testCommand) GetName() string {
+	return c.name
+}
+
+func (c *testCommand) GetNew() any {
+	return nil
+}
+
+func (c *testCommand) GetOptions() []kong.Option {
+	return nil
+}
+
+func (c *testCommand) SplitBySpaceOnly() bool {
+	return c.splitBySpaceOnly
+}
+
+func (c *testCommand) Preprocess(remaining string) {}
+
+func (c *testCommand) OnCommand(parseResult *ParseResult) {
+	c.onCommand(parseResult)
+}
 
 func TestSplitMsg1(t *testing.T) {
 	assert := assert.New(t)
@@ -67,4 +97,62 @@ func TestSplitMsg9(t *testing.T) {
 	msg := `abc[CQ:x,qq=abc"def\g\"hi][CQ:x,qq=abc"def\g\"hi] arg2`
 	args := getArgs(msg, false)
 	assert.Equal([]string{"abc", "[CQ:x,qq=abc\"def\\g\\\"hi]", "[CQ:x,qq=abc\"def\\g\\\"hi]", "arg2"}, args)
+}
+
+func TestGetPrefix1(t *testing.T) {
+	assert := assert.New(t)
+	msg := "prefix arg1 arg2 arg3"
+	prefix := getPrefix(msg)
+	assert.Equal("prefix", prefix)
+}
+
+func TestGetPrefix2(t *testing.T) {
+	assert := assert.New(t)
+	msg := "prefix[CQ:at,qq=123456]arg1 arg2 arg3"
+	prefix := getPrefix(msg)
+	assert.Equal("prefix", prefix)
+}
+
+func TestGetPrefix3(t *testing.T) {
+	assert := assert.New(t)
+	msg := "pre&amp;fix[CQ:at,qq=123456]arg1 arg2 arg3"
+	prefix := getPrefix(msg)
+	assert.Equal("pre&amp;fix", prefix)
+}
+
+func TestGetCommand(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	testCmd := &testCommand{
+		name:             "prefix",
+		splitBySpaceOnly: true,
+	}
+	testCmd2 := &testCommand{
+		name:             "prefix",
+		splitBySpaceOnly: true,
+	}
+	c.Commands["prefix"] = testCmd
+	c.Commands["pre&fix"] = testCmd2
+	actual, pref := c.getCommand("prefix arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd, actual)
+	assert.Equal("prefix", pref)
+
+	actual, pref = c.getCommand("prefix[CQ:at,qq=123456]arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd, actual)
+	assert.Equal("prefix", pref)
+
+	actual, pref = c.getCommand("pre&amp;fix[CQ:at,qq=123456]arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd2, actual)
+	assert.Equal("pre&amp;fix", pref)
+
+	actual, pref = c.getCommand("prefixd arg1 arg2 arg3")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+
+	actual, pref = c.getCommand("[CQ:at,qq=123456]arg1 arg2 arg3")
+	assert.Nil(actual)
+	assert.Equal("", pref)
 }
