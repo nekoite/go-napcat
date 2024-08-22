@@ -8,6 +8,7 @@ import (
 	gonapcat "github.com/nekoite/go-napcat"
 	"github.com/nekoite/go-napcat/config"
 	"github.com/nekoite/go-napcat/event"
+	"github.com/nekoite/go-napcat/message"
 	"go.uber.org/zap"
 )
 
@@ -16,25 +17,25 @@ func main() {
 	bot := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
 	bot.RegisterHandlerPrivateMessage(func(e event.IEvent) {
 		bot.Logger.Info("Received private message", zap.Any("event", e.AsPrivateMessageEvent()))
-		resp, err := bot.SendPrivateMsgString(714026292, "你好", false)
+		msgId, err := e.AsPrivateMessageEvent().Reply(message.NewText("你好").Message().AsChain(), true)
 		if err != nil {
 			bot.Logger.Error("Failed to send private message", zap.Error(err))
 			return
 		}
-		bot.Logger.Info("Sent private message", zap.Any("resp", resp))
-		resp2, err := bot.GetMsg(resp.Data.MessageId)
+		bot.Logger.Info("Sent private message", zap.Any("id", msgId))
+		resp2, err := bot.GetMsg(msgId)
 		if err != nil {
 			bot.Logger.Error("Failed to get message", zap.Error(err))
 			return
 		}
 		bot.Logger.Info("Got message", zap.Any("resp", resp2))
-		// <-time.After(1 * time.Second)
-		// resp2, err := bot.DeleteMsg(resp.Data.MessageId)
-		// if err != nil {
-		// 	bot.Logger.Error("Failed to delete message", zap.Error(err))
-		// 	return
-		// }
-		// bot.Logger.Info("Deleted message", zap.Any("resp", resp2))
+		<-time.After(1 * time.Second)
+		resp3, err := bot.DeleteMsg(msgId)
+		if err != nil {
+			bot.Logger.Error("Failed to delete message", zap.Error(err))
+			return
+		}
+		bot.Logger.Info("Deleted message", zap.Any("resp", resp3))
 	})
 	bot.Start()
 	defer gonapcat.Finalize()

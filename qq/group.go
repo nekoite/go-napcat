@@ -1,5 +1,11 @@
 package qq
 
+type AnonymousData struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+	Flag string `json:"flag"`
+}
+
 type Group struct {
 	GroupId        int64  `json:"group_id"`
 	GroupName      string `json:"group_name"`

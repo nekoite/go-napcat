@@ -10,6 +10,7 @@ import (
 	"github.com/nekoite/go-napcat/errors"
 	"github.com/nekoite/go-napcat/event"
 	"github.com/nekoite/go-napcat/message"
+	"github.com/nekoite/go-napcat/qq"
 	"github.com/nekoite/go-napcat/utils"
 	"github.com/nekoite/go-napcat/ws"
 	"go.uber.org/zap"
@@ -24,7 +25,7 @@ type Bot struct {
 	cfg        *config.BotConfig
 	conn       *ws.Client
 	dispatcher *event.Dispatcher
-	sender     *api.Sender
+	api        *api.Sender
 
 	Logger *BotLogger
 }
@@ -38,7 +39,7 @@ func NewBot(cfg *config.BotConfig) *Bot {
 		Logger: &BotLogger{logger: logger},
 	}
 	bot.conn = ws.NewConn(logger, cfg, bot.onRecvWsMsg)
-	bot.sender = api.NewSender(bot.conn)
+	bot.api = api.NewSender(bot.conn)
 	return bot
 }
 
@@ -107,55 +108,67 @@ func (b *Bot) Close() {
 	b.Logger.Sync()
 }
 
+func (b *Bot) Api() *api.Sender {
+	return b.api
+}
+
 func (b *Bot) SendRawString(msg string) {
 	b.conn.Send([]byte(msg))
 }
 
 func (b *Bot) SendRaw(action api.Action, params map[string]any) (api.IResp, error) {
-	return b.sender.SendRaw(action, params)
+	return b.api.SendRaw(action, params)
 }
 
 func (b *Bot) SendPrivateMsgString(userId int64, message string, autoEscape bool) (*api.Resp[api.RespDataMessageId], error) {
-	return b.sender.SendPrivateMsgString(userId, message, autoEscape)
+	return b.api.SendPrivateMsgString(userId, message, autoEscape)
 }
 
-func (b *Bot) SendPrivateMsg(userId int64, message message.Chain, autoEscape bool) (*api.Resp[api.RespDataMessageId], error) {
-	return b.sender.SendPrivateMsg(userId, message, autoEscape)
+func (b *Bot) SendPrivateMsg(userId int64, message *message.Chain) (*api.Resp[api.RespDataMessageId], error) {
+	return b.api.SendPrivateMsg(userId, message)
 }
 
 func (b *Bot) SendGroupMsgString(groupId int64, message string, autoEscape bool) (*api.Resp[api.RespDataMessageId], error) {
-	return b.sender.SendGroupMsgString(groupId, message, autoEscape)
+	return b.api.SendGroupMsgString(groupId, message, autoEscape)
 }
 
-func (b *Bot) SendGroupMsg(groupId int64, message message.Chain, autoEscape bool) (*api.Resp[api.RespDataMessageId], error) {
-	return b.sender.SendGroupMsg(groupId, message, autoEscape)
+func (b *Bot) SendGroupMsg(groupId int64, message *message.Chain) (*api.Resp[api.RespDataMessageId], error) {
+	return b.api.SendGroupMsg(groupId, message)
 }
 
 func (b *Bot) SendMsg(msg any, autoEscape bool) (*api.Resp[api.RespDataMessageId], error) {
-	return b.sender.SendMsg(msg, autoEscape)
+	return b.api.SendMsg(msg, autoEscape)
 }
 
-func (b *Bot) DeleteMsg(messageId int64) (*api.Resp[utils.Void], error) {
-	return b.sender.DeleteMsg(messageId)
+func (b *Bot) DeleteMsg(messageId qq.MessageId) (*api.Resp[utils.Void], error) {
+	return b.api.DeleteMsg(messageId)
 }
 
-func (b *Bot) GetMsg(messageId int64) (*api.Resp[api.RespDataMessage], error) {
-	return b.sender.GetMsg(messageId)
+func (b *Bot) GetMsg(messageId qq.MessageId) (*api.Resp[api.RespDataMessage], error) {
+	return b.api.GetMsg(messageId)
+}
+
+func (b *Bot) GetForwardMsg(id string) (*api.Resp[api.RespDataMessageOnly], error) {
+	return b.api.GetForwardMsg(id)
+}
+
+func (b *Bot) SendLike(userId int64, times int) (*api.Resp[utils.Void], error) {
+	return b.api.SendLike(userId, times)
 }
 
 func (b *Bot) onRecvWsMsg(msg []byte) {
 	if utils.IsRawMessageApiResp(msg) {
 		err := utils.TimedFunc(func() error {
-			return b.sender.HandleApiResp(msg)
+			return b.api.HandleApiResp(msg)
 		}, func(t time.Duration) {
-			b.Logger.Debug("handle api resp duration", zap.Duration("time", t))
+			b.Logger.Debug("handle api resp duration", zap.Duration("ms", t))
 		})
 		if err != nil {
 			b.Logger.Error("handle api resp", zap.Error(err))
 		}
 		return
 	}
-	e, err := event.ParseEvent(msg, b.sender)
+	e, err := event.ParseEvent(msg, b.api)
 	if err != nil {
 		if !errors2.Is(err, errors.ErrGoNapcat) {
 			b.Logger.Error("parse event", zap.Error(err))
@@ -170,10 +183,10 @@ func (b *Bot) onRecvWsMsg(msg []byte) {
 		if b.cfg.UseGoroutine {
 			return
 		}
-		if t > 500*time.Millisecond {
-			b.Logger.Warn("event execution duration", zap.Duration("time", t))
+		if t > 1*time.Second {
+			b.Logger.Info("event execution duration", zap.Duration("ms", t))
 		} else {
-			b.Logger.Debug("event execution duration", zap.Duration("time", t))
+			b.Logger.Debug("event execution duration", zap.Duration("ms", t))
 		}
 	})
 }

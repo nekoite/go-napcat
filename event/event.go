@@ -2,6 +2,7 @@ package event
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/nekoite/go-napcat/api"
 	"github.com/nekoite/go-napcat/errors"
@@ -93,6 +94,7 @@ type IEvent interface {
 	GetSelfId() int64
 	GetEventType() EventType
 
+	AsMessageEvent() IMessageEvent
 	AsPrivateMessageEvent() *PrivateMessageEvent
 	AsGroupMessageEvent() *GroupMessageEvent
 	AsNoticeEventGroupUpload() *NoticeEventGroupUpload
@@ -120,6 +122,7 @@ type IEvent interface {
 type IMessageEvent interface {
 	IEvent
 	GetMessageEventType() MessageEventType
+	GetMessageId() qq.MessageId
 	GetMessage() *message.Chain
 	GetRawMessage() string
 }
@@ -166,17 +169,11 @@ func (e *BaseEvent) setError(err error) {
 	e.error = err
 }
 
-type AnonymousData struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
-	Flag string `json:"flag"`
-}
-
 type MessageEvent struct {
 	BaseEvent
 	MessageType MessageEventType    `json:"message_type"`
 	SubType     MessageEventSubtype `json:"sub_type"`
-	MessageId   int32               `json:"message_id"`
+	MessageId   qq.MessageId        `json:"message_id"`
 	UserId      int64               `json:"user_id"`
 	Message     *message.Chain      `json:"message"`
 	RawMessage  string              `json:"raw_message"`
@@ -190,9 +187,9 @@ type PrivateMessageEvent struct {
 
 type GroupMessageEvent struct {
 	MessageEvent
-	GroupId   int64         `json:"group_id"`
-	Anonymous AnonymousData `json:"anonymous"`
-	Sender    qq.GroupUser  `json:"sender"`
+	GroupId   int64            `json:"group_id"`
+	Anonymous qq.AnonymousData `json:"anonymous"`
+	Sender    qq.GroupUser     `json:"sender"`
 }
 
 type NoticeEvent struct {
@@ -229,12 +226,12 @@ type NoticeEventGroupBan struct {
 
 type NoticeEventGroupRecall struct {
 	GroupNoticeEvent
-	MessageId int64 `json:"message_id"`
+	MessageId qq.MessageId `json:"message_id"`
 }
 
 type NoticeEventFriendRecall struct {
 	NoticeEvent
-	MessageId int64 `json:"message_id"`
+	MessageId qq.MessageId `json:"message_id"`
 }
 
 type NoticeEventFriendAdd NoticeEvent
@@ -283,6 +280,61 @@ func (e *MessageEvent) GetRawMessage() string {
 
 func (e *MessageEvent) GetMessage() *message.Chain {
 	return e.Message
+}
+
+func (e *MessageEvent) GetMessageId() qq.MessageId {
+	return e.MessageId
+}
+
+func (e *PrivateMessageEvent) Reply(msg *message.Chain, quote bool) (qq.MessageId, error) {
+	if quote {
+		msg.SetReplyTo(e.MessageId)
+	}
+	// todo: use quick op?
+	resp, err := e.apiSender.SendPrivateMsg(e.UserId, msg)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Data.MessageId, nil
+}
+
+func (e *PrivateMessageEvent) ReplyString(msg string, autoEscape bool, quote bool) (qq.MessageId, error) {
+	if !autoEscape && quote {
+		msg = fmt.Sprintf("[CQ:reply,id=%d]%s", e.MessageId, msg)
+	}
+	resp, err := e.apiSender.SendPrivateMsgString(e.UserId, msg, autoEscape)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Data.MessageId, nil
+}
+
+func (e *GroupMessageEvent) Reply(msg *message.Chain, quote bool, at bool) (qq.MessageId, error) {
+	if quote {
+		msg.SetReplyTo(e.MessageId)
+	}
+	if at {
+		msg.PrependMessage(message.NewAtUser(e.Sender.UserId).Message())
+	}
+	resp, err := e.apiSender.SendGroupMsg(e.GroupId, msg)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Data.MessageId, nil
+}
+
+func (e *GroupMessageEvent) ReplyString(msg string, autoEscape bool, quote bool, at bool) (qq.MessageId, error) {
+	if !autoEscape && quote {
+		msg = fmt.Sprintf("[CQ:reply,id=%d]%s", e.MessageId, msg)
+	}
+	if !autoEscape && at {
+		msg = fmt.Sprintf("[CQ:at,id=%d]%s", e.Sender.UserId, msg)
+	}
+	resp, err := e.apiSender.SendGroupMsgString(e.GroupId, msg, autoEscape)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Data.MessageId, nil
 }
 
 func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {

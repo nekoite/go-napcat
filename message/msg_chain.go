@@ -2,6 +2,7 @@ package message
 
 import (
 	"github.com/goccy/go-json"
+	"github.com/nekoite/go-napcat/qq"
 	"github.com/nekoite/go-napcat/utils"
 )
 
@@ -13,8 +14,24 @@ type Chain struct {
 	Messages []Message
 }
 
-func NewMessageChain() *Chain {
-	return &Chain{}
+func NewChain(msg ...Message) *Chain {
+	return &Chain{Messages: msg}
+}
+
+func (mc *Chain) PrependMessage(msg Message) {
+	mc.Messages = append([]Message{msg}, mc.Messages...)
+}
+
+func (mc *Chain) PrependMessages(msg ...Message) {
+	mc.Messages = append(msg, mc.Messages...)
+}
+
+func (mc *Chain) PrependChain(chain Chain) {
+	mc.PrependMessages(chain.Messages...)
+}
+
+func (mc *Chain) AddMessage(msg Message) {
+	mc.Messages = append(mc.Messages, msg)
 }
 
 func (mc *Chain) AddMessages(msg ...Message) {
@@ -31,7 +48,11 @@ func (mc *Chain) AppendChain(chain Chain) {
 
 // SetSendAsAnonymous 设置是否匿名发送消息。当 ignore 为 true 时，将在无法匿名发送消息时继续发送消息。
 func (mc *Chain) SetSendAsAnonymous(ignore bool) {
-	mc.AddMessages(NewAnonymous(ignore).Message())
+	mc.AddMessage(NewAnonymous(ignore).Message())
+}
+
+func (mc *Chain) SetReplyTo(msgId qq.MessageId) {
+	mc.AddMessage(NewReply(msgId).Message())
 }
 
 func (mc *Chain) Clear() {
@@ -58,4 +79,8 @@ func (mc *Chain) UnmarshalJSON(data []byte) error {
 		mc.Messages[i] = msg
 	}
 	return nil
+}
+
+func (mc *Chain) MarshalJSON() ([]byte, error) {
+	return json.Marshal(mc.Messages)
 }

@@ -33,7 +33,7 @@ type Resp[T any] struct {
 }
 
 type RespDataMessageId struct {
-	MessageId int64 `json:"message_id"`
+	MessageId qq.MessageId `json:"message_id"`
 }
 
 type RespDataMessageOnly struct {
@@ -250,7 +250,7 @@ func (r *RespDataMessage) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal([]byte(fields[1].Raw), &r.Message); err != nil {
 		return err
 	}
-	r.MessageId = fields[0].Int()
+	r.MessageId = qq.MessageId(fields[0].Int())
 	r.Time = fields[2].Int()
 	r.MessageType = messageType
 	r.RealId = fields[4].Int()

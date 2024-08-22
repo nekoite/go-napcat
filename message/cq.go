@@ -87,7 +87,7 @@ func (mc *Chain) String() string {
 }
 
 func ParseCQString(s string) (*Chain, error) {
-	chain := NewMessageChain()
+	chain := NewChain()
 	idx := 0
 	for {
 		start := strings.Index(s[idx:], "[CQ:")
@@ -187,7 +187,7 @@ func parseMessagePart(ty MessageType, parts map[string]string) (Message, error) 
 			m.Data = new(IdNodeData)
 		} else {
 			d := new(CustomNodeData)
-			d.Content = NewMessageChain()
+			d.Content = NewChain()
 			m.Data = d
 		}
 	case MessageTypeXml:

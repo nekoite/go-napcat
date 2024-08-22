@@ -22,6 +22,10 @@ func GetAsOrError[T any](e any) (*T, error) {
 	return t, nil
 }
 
+func (e *PrivateMessageEvent) AsMessageEvent() IMessageEvent {
+	return e
+}
+
 func (e *PrivateMessageEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return e
 }
@@ -72,6 +76,10 @@ func (e *PrivateMessageEvent) AsGroupRequestEvent() *GroupRequestEvent {
 
 func (e *PrivateMessageEvent) AsMetaEvent() *MetaEvent {
 	return nil
+}
+
+func (e *GroupMessageEvent) AsMessageEvent() IMessageEvent {
+	return e
 }
 
 func (e *GroupMessageEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
@@ -126,6 +134,10 @@ func (e *GroupMessageEvent) AsMetaEvent() *MetaEvent {
 	return nil
 }
 
+func (e *MessageEvent) AsMessageEvent() IMessageEvent {
+	return e
+}
+
 func (e *MessageEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -175,6 +187,10 @@ func (e *MessageEvent) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *MessageEvent) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *NoticeEventGroupUpload) AsMessageEvent() IMessageEvent {
 	return nil
 }
 
@@ -229,6 +245,11 @@ func (e *NoticeEventGroupUpload) AsGroupRequestEvent() *GroupRequestEvent {
 func (e *NoticeEventGroupUpload) AsMetaEvent() *MetaEvent {
 	return nil
 }
+
+func (e *NoticeEventGroupOperation) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *NoticeEventGroupOperation) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -278,6 +299,10 @@ func (e *NoticeEventGroupOperation) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *NoticeEventGroupOperation) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *NoticeEventGroupBan) AsMessageEvent() IMessageEvent {
 	return nil
 }
 
@@ -333,6 +358,10 @@ func (e *NoticeEventGroupBan) AsMetaEvent() *MetaEvent {
 	return nil
 }
 
+func (e *NoticeEventGroupRecall) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *NoticeEventGroupRecall) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -382,6 +411,10 @@ func (e *NoticeEventGroupRecall) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *NoticeEventGroupRecall) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *NoticeEventFriendRecall) AsMessageEvent() IMessageEvent {
 	return nil
 }
 
@@ -437,6 +470,10 @@ func (e *NoticeEventFriendRecall) AsMetaEvent() *MetaEvent {
 	return nil
 }
 
+func (e *GroupNoticeEvent) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *GroupNoticeEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -486,6 +523,10 @@ func (e *GroupNoticeEvent) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *GroupNoticeEvent) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *NoticeEventFriendAdd) AsMessageEvent() IMessageEvent {
 	return nil
 }
 
@@ -541,6 +582,10 @@ func (e *NoticeEventFriendAdd) AsNoticeEventFriendRecall() *NoticeEventFriendRec
 	return nil
 }
 
+func (e *NoticeEventGroupNotify) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *NoticeEventGroupNotify) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -590,6 +635,10 @@ func (e *NoticeEventGroupNotify) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *NoticeEventGroupNotify) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *NoticeEventGroupHonor) AsMessageEvent() IMessageEvent {
 	return nil
 }
 
@@ -645,6 +694,10 @@ func (e *NoticeEventGroupHonor) AsMetaEvent() *MetaEvent {
 	return nil
 }
 
+func (e *FriendRequestEvent) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *FriendRequestEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -694,6 +747,10 @@ func (e *FriendRequestEvent) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *FriendRequestEvent) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *GroupRequestEvent) AsMessageEvent() IMessageEvent {
 	return nil
 }
 
@@ -749,6 +806,10 @@ func (e *GroupRequestEvent) AsMetaEvent() *MetaEvent {
 	return nil
 }
 
+func (e *MetaEvent) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *MetaEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -799,6 +860,10 @@ func (e *MetaEvent) AsGroupRequestEvent() *GroupRequestEvent {
 
 func (e *MetaEvent) AsMetaEvent() *MetaEvent {
 	return e
+}
+
+func (e *NoticeEvent) AsMessageEvent() IMessageEvent {
+	return nil
 }
 
 func (e *NoticeEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
@@ -853,6 +918,10 @@ func (e *NoticeEvent) AsMetaEvent() *MetaEvent {
 	return nil
 }
 
+func (e *RequestEvent) AsMessageEvent() IMessageEvent {
+	return nil
+}
+
 func (e *RequestEvent) AsPrivateMessageEvent() *PrivateMessageEvent {
 	return nil
 }
@@ -902,6 +971,10 @@ func (e *RequestEvent) AsGroupRequestEvent() *GroupRequestEvent {
 }
 
 func (e *RequestEvent) AsMetaEvent() *MetaEvent {
+	return nil
+}
+
+func (e *BaseEvent) AsMessageEvent() IMessageEvent {
 	return nil
 }
 

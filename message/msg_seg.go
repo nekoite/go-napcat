@@ -1,7 +1,10 @@
 package message
 
 import (
+	"strconv"
+
 	"github.com/goccy/go-json"
+	"github.com/nekoite/go-napcat/qq"
 	"github.com/nekoite/go-napcat/utils"
 	"github.com/tidwall/gjson"
 )
@@ -164,6 +167,10 @@ type JsonData struct {
 
 type UnknownData map[string]any
 
+func (m Message) AsChain() *Chain {
+	return NewChain(m)
+}
+
 func (m *Message) GetTextData() TextData {
 	return GetMsgData[TextData](m)
 }
@@ -220,7 +227,7 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 		} else {
 			// special handling for custom node
 			nd := new(CustomNodeData)
-			nd.Content = NewMessageChain()
+			nd.Content = NewChain()
 			d = nd
 		}
 	case MessageTypeXml:
@@ -282,8 +289,17 @@ func NewVideo(file string) VideoData {
 	return VideoData{File: file}
 }
 
+// NewAt 创建 @ 消息，qq 为被 @ 的用户 QQ 号或 all 表示 @ 所有人
 func NewAt(qq string) AtData {
 	return AtData{QQ: qq}
+}
+
+func NewAtAll() AtData {
+	return AtData{QQ: "all"}
+}
+
+func NewAtUser(id int64) AtData {
+	return NewAt(strconv.Itoa(int(id)))
 }
 
 func NewRps() RpsData {
@@ -334,8 +350,8 @@ func NewCustomMusic(t MusicType, title, url, audio string) CustomMusicData {
 	return CustomMusicData{BasicMusicData: BasicMusicData{Type: t}, Title: title, Url: url, Audio: audio}
 }
 
-func NewReply(id int64) ReplyData {
-	return ReplyData{Id: id}
+func NewReply(id qq.MessageId) ReplyData {
+	return ReplyData{Id: int64(id)}
 }
 
 func NewNode(id int64) IdNodeData {
