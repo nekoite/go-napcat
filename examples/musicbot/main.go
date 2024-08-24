@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"time"
@@ -65,7 +66,7 @@ func (c *MusicCommand) OnCommand(parseResult *event.ParseResult) {
 }
 
 func getQQMusicId(songName string) (int64, error) {
-	resp, err := http.Get(fmt.Sprintf("https://c6.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg?_=1724470252605&cv=4747474&ct=24&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=1&uin=0&g_tk_new_20200303=1198146162&g_tk=1198146162&hostUin=0&is_xml=0&key=%s", songName))
+	resp, err := http.Get(fmt.Sprintf("https://c6.y.qq.com/splcloud/fcgi-bin/smartbox_new.fcg?_=1724470252605&cv=4747474&ct=24&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=1&uin=0&g_tk_new_20200303=1198146162&g_tk=1198146162&hostUin=0&is_xml=0&key=%s", url.QueryEscape(songName)))
 	if err != nil {
 		return 0, err
 	}
