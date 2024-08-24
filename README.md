@@ -7,6 +7,12 @@
 > [!NOTE]
 > 项目还处于 v0 阶段，测试不完善，接口不稳定！请谨慎使用。
 
+## 导入
+
+```sh
+go get -u github.com/nekoite/go-napcat
+```
+
 ## 机器人与初始化
 
 首先，使用 `gonapcat.Init(*config.LogConfig)` 进行初始化并配置日志。不要忘记使用 `defer gonapcat.Finalize()` 或在最后调用这个函数来安全退出。
