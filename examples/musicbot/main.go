@@ -17,14 +17,14 @@ import (
 )
 
 type MusicCommandArgs struct {
-	Platform string `arg:"" enum:"163,qq" required:"" help:"音乐平台，163 或 qq"`
+	Platform string `short:"p" enum:"163,qq" optional:"" default:"qq" help:"音乐平台，163 或 qq"`
 	SongName string `arg:"" required:"" help:"歌曲名"`
 }
 
 type MusicCommand struct{}
 
-func (c *MusicCommand) GetName() string {
-	return "music"
+func (c *MusicCommand) GetName() (string, event.CmdNameMode) {
+	return "music", event.CmdNameModeNormal
 }
 
 func (c *MusicCommand) GetNew() any {

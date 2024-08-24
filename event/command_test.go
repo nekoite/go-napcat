@@ -10,12 +10,13 @@ import (
 
 type testCommand struct {
 	name             string
+	mode             CmdNameMode
 	splitBySpaceOnly bool
 	onCommand        func(parseResult *ParseResult)
 }
 
-func (c *testCommand) GetName() string {
-	return c.name
+func (c *testCommand) GetName() (string, CmdNameMode) {
+	return c.name, c.mode
 }
 
 func (c *testCommand) GetNew() any {
@@ -120,15 +121,17 @@ func TestGetPrefix3(t *testing.T) {
 	assert.Equal("pre&amp;fix", prefix)
 }
 
-func TestGetCommand(t *testing.T) {
+func TestGetCommandModeNormal(t *testing.T) {
 	assert := assert.New(t)
 	c := NewCommandCenter(zap.NewNop())
 	testCmd := &testCommand{
 		name:             "prefix",
+		mode:             CmdNameModeNormal,
 		splitBySpaceOnly: true,
 	}
 	testCmd2 := &testCommand{
-		name:             "prefix",
+		name:             "pre&fix",
+		mode:             CmdNameModeNormal,
 		splitBySpaceOnly: true,
 	}
 	c.Commands["prefix"] = testCmd
@@ -151,6 +154,50 @@ func TestGetCommand(t *testing.T) {
 	actual, pref = c.getCommand("prefixd arg1 arg2 arg3")
 	assert.Nil(actual)
 	assert.Equal("", pref)
+
+	actual, pref = c.getCommand("[CQ:at,qq=123456]arg1 arg2 arg3")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+}
+
+func TestGetCommandModePrefix(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	testCmd := &testCommand{
+		name:             "prefix",
+		mode:             CmdNameModePrefix,
+		splitBySpaceOnly: true,
+	}
+	testCmd2 := &testCommand{
+		name:             "pre[fix",
+		mode:             CmdNameModePrefix,
+		splitBySpaceOnly: true,
+	}
+	c.PrefixCommands = append(c.PrefixCommands, testCmd, testCmd2)
+	actual, pref := c.getCommand("prefix arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd, actual)
+	assert.Equal("prefix", pref)
+
+	actual, pref = c.getCommand("prefix[CQ:at,qq=123456]arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd, actual)
+	assert.Equal("prefix", pref)
+
+	actual, pref = c.getCommand("pre&#91;fix[CQ:at,qq=123456]arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd2, actual)
+	assert.Equal("pre&#91;fix", pref)
+
+	actual, pref = c.getCommand("prefixd arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd, actual)
+	assert.Equal("prefix", pref)
+
+	actual, pref = c.getCommand("pre&#91;fixd arg1 arg2 arg3")
+	assert.NotNil(actual)
+	assert.Equal(testCmd2, actual)
+	assert.Equal("pre&#91;fix", pref)
 
 	actual, pref = c.getCommand("[CQ:at,qq=123456]arg1 arg2 arg3")
 	assert.Nil(actual)

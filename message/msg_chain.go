@@ -52,7 +52,7 @@ func (mc *Chain) SetSendAsAnonymous(ignore bool) {
 }
 
 func (mc *Chain) SetReplyTo(msgId qq.MessageId) {
-	mc.AddMessage(NewReply(msgId).Message())
+	mc.PrependMessage(NewReply(msgId).Message())
 }
 
 func (mc *Chain) Clear() {

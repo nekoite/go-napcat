@@ -8,6 +8,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type CmdNameMode string
+
+const (
+	CmdNameModePrefix CmdNameMode = "prefix"
+	CmdNameModeNormal CmdNameMode = "normal"
+)
+
 type ParseResult struct {
 	Ctx        *kong.Context
 	Event      IMessageEvent
@@ -19,7 +26,7 @@ type ParseResult struct {
 }
 
 type ICommand interface {
-	GetName() string
+	GetName() (string, CmdNameMode)
 	// GetNew 用于获取一个新的命令行参数定义结构体。
 	// 它将被传入回调函数。具体请参考 kong 的文档。
 	GetNew() any
@@ -32,7 +39,8 @@ type ICommand interface {
 type CommandCenter struct {
 	logger *zap.Logger
 
-	Commands map[string]ICommand
+	Commands       map[string]ICommand
+	PrefixCommands []ICommand
 }
 
 func NewParseResult() *ParseResult {
@@ -41,17 +49,26 @@ func NewParseResult() *ParseResult {
 
 func NewCommandCenter(logger *zap.Logger) *CommandCenter {
 	return &CommandCenter{
-		logger:   logger.Named("command"),
-		Commands: make(map[string]ICommand),
+		logger:         logger.Named("command"),
+		Commands:       make(map[string]ICommand),
+		PrefixCommands: make([]ICommand, 0),
 	}
 }
 
 func (c *CommandCenter) RegisterCommand(command ICommand) {
-	c.Commands[command.GetName()] = command
+	name, mode := command.GetName()
+	switch mode {
+	case CmdNameModePrefix:
+		c.PrefixCommands = append(c.PrefixCommands, command)
+	case CmdNameModeNormal:
+		c.Commands[name] = command
+	default:
+		c.logger.Error("unknown command name mode", zap.String("mode", string(mode)))
+	}
 }
 
 func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
-	if len(c.Commands) == 0 {
+	if len(c.Commands) == 0 && len(c.PrefixCommands) == 0 {
 		return
 	}
 	rawMsg := event.GetRawMessage()
@@ -59,13 +76,14 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	if cmd == nil {
 		return
 	}
+	cmdName, _ := cmd.GetName()
 	parseResult := NewParseResult()
 	stdout := strings.Builder{}
 	stderr := strings.Builder{}
 	options := []kong.Option{
 		kong.Exit(func(i int) { parseResult.ExitCode = i }),
 		kong.Writers(&stdout, &stderr),
-		kong.Name(cmd.GetName()),
+		kong.Name(cmdName),
 	}
 	gram := cmd.GetNew()
 	k, err := kong.New(
@@ -92,6 +110,13 @@ func (c *CommandCenter) getCommand(raw string) (ICommand, string) {
 	pref := getPrefix(raw)
 	if len(pref) == 0 {
 		return nil, ""
+	}
+	for _, cmd := range c.PrefixCommands {
+		p, _ := cmd.GetName()
+		escapedP := message.EscapeCQString(p)
+		if strings.HasPrefix(pref, escapedP) {
+			return cmd, pref[:len(escapedP)]
+		}
 	}
 	cmd, ok := c.Commands[message.UnescapeCQString(pref)]
 	if !ok {

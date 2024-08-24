@@ -52,11 +52,19 @@ go get -u github.com/nekoite/go-napcat
 
 指令的字符串内容均为转义后的 CQ 码字符串。使用前请使用 `message.ParseCQString` 转换为 `*message.Chain`，或者使用 `message.UnescapeCQString` 对它进行反转义（如果你只需要用到字符串形式的话）。
 
-### 指令的消息分割
+#### 定义
+
+想要定义一个指令，需要实现 `event.ICommand` 接口。其中，`GetName()` 返回指令名称或前缀，以及名称模式。返回的指令名称不需要经过转义。**指令名称中不能包含空格。**
 
 首先，指令名称是从开头到*第一个非文本元素*或*第一个空格*为止的字符串。例如，`send x y z` 的指令名是 `send`，`send[CQ:image,file=./a.jpg]` 的指令名也是 `send`。
 
-然后，在剩下的字符串中，有两种参数分割方式。
+如果名称模式为 `CmdNameModePrefix`，则提供的名称将作为前缀与上述处理后的指令名称匹配。例如，如果消息是 `prefABC`，而 `GetName()` 返回 `("pref", CmdNameModePrefix)`，则匹配成功，并且指令名称是 `pref`，剩余部分是 `ABC`。消息前缀将先被反转义后作比较。
+
+如果名称模式为 `CmdNameModeNormal`，则直接用处理后得到的指令名称反转义后进行匹配查找。
+
+#### 指令的参数分割
+
+在剩下的字符串中，有两种参数分割方式。
 
 - 当 `event.ICommand::SplitBySpaceOnly()` 返回 `true` 时，只使用空格分割。例如，`x y z` 将会分割为 `[x, y, z]`，`a1[CQ:image,file=./a.jpg]a2 b c` 将会被分割为 `[a1[CQ:image,file=./a.jpg]a2, b, c]`。
 - 当 `event.ICommand::SplitBySpaceOnly()` 返回 `false` 时，不同类型元素之间也会分割。例如，`a1[CQ:image,file=./a.jpg]a2 b c` 将会被分割为 `[a1, [CQ:image,file=./a.jpg], a2, b, c]`。
