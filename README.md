@@ -87,3 +87,19 @@ err := ext.Register()
 #### 内置扩展
 
 - NapCat 扩展：`napcat.Extension.Register()`
+
+## 日志
+
+请使用机器人对象自带的 `bot.[Log|Info|Debug|Warn|Error|Fatal]`。格式使用 [zap]。
+
+## 自带库
+
+包括但不限于：
+
+- 用于打印日志的 [zap]
+- 用于解析 JSON 的 [goccy/go-json](https://github.com/goccy/go-json) 和 [gjson](https://github.com/tidwall/gjson)
+- 用于解析命令行参数的 [kong](https://github.com/alecthomas/kong)
+
+可以直接使用以上推荐的库。
+
+[zap]: https://github.com/uber-go/zap
