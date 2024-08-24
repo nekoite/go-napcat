@@ -1,5 +1,7 @@
 # go-napcat
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/nekoite/go-napcat.svg)](https://pkg.go.dev/github.com/nekoite/go-napcat) [![Go Report Card](https://goreportcard.com/badge/github.com/nekoite/go-napcat)](https://goreportcard.com/report/github.com/nekoite/go-napcat) ![Build Status](https://github.com/nekoite/go-napcat/actions/workflows/build.yml/badge.svg)
+
 上啊！瞌睡猫猫！
 
 带有 NapCat 支持的 OneBot 协议库。
