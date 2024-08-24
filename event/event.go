@@ -125,6 +125,8 @@ type IMessageEvent interface {
 	GetMessageId() qq.MessageId
 	GetMessage() *message.Chain
 	GetRawMessage() string
+
+	Reply(msg *message.Chain, quote bool) (qq.MessageId, error)
 }
 
 type BaseEvent struct {
@@ -286,6 +288,10 @@ func (e *MessageEvent) GetMessageId() qq.MessageId {
 	return e.MessageId
 }
 
+func (e *MessageEvent) Reply(msg *message.Chain, quote bool) (qq.MessageId, error) {
+	return 0, errors.ErrUnsupportedOperation
+}
+
 func (e *PrivateMessageEvent) Reply(msg *message.Chain, quote bool) (qq.MessageId, error) {
 	if quote {
 		msg.SetReplyTo(e.MessageId)
@@ -309,7 +315,18 @@ func (e *PrivateMessageEvent) ReplyString(msg string, autoEscape bool, quote boo
 	return resp.Data.MessageId, nil
 }
 
-func (e *GroupMessageEvent) Reply(msg *message.Chain, quote bool, at bool) (qq.MessageId, error) {
+func (e *GroupMessageEvent) Reply(msg *message.Chain, quote bool) (qq.MessageId, error) {
+	if quote {
+		msg.SetReplyTo(e.MessageId)
+	}
+	resp, err := e.apiSender.SendGroupMsg(e.GroupId, msg)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Data.MessageId, nil
+}
+
+func (e *GroupMessageEvent) ReplyAt(msg *message.Chain, quote bool, at bool) (qq.MessageId, error) {
 	if quote {
 		msg.SetReplyTo(e.MessageId)
 	}
@@ -335,6 +352,26 @@ func (e *GroupMessageEvent) ReplyString(msg string, autoEscape bool, quote bool,
 		return 0, err
 	}
 	return resp.Data.MessageId, nil
+}
+
+func (e *FriendRequestEvent) Approve(remark string) error {
+	_, err := e.apiSender.SetFriendAddRequest(e.Flag, true, remark)
+	return err
+}
+
+func (e *FriendRequestEvent) Reject(reason string) error {
+	_, err := e.apiSender.SetFriendAddRequest(e.Flag, false, reason)
+	return err
+}
+
+func (e *GroupRequestEvent) Approve() error {
+	_, err := e.apiSender.SetGroupAddRequest(e.Flag, string(e.SubType), true, "")
+	return err
+}
+
+func (e *GroupRequestEvent) Reject(reason string) error {
+	_, err := e.apiSender.SetGroupAddRequest(e.Flag, string(e.SubType), false, reason)
+	return err
 }
 
 func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {

@@ -24,5 +24,8 @@ var (
 	ErrExtensionAlreadyRegistered = fmt.Errorf("%w: extension already registered", ErrGoNapcat)
 	ErrActionAlreadyRegistered    = fmt.Errorf("%w: action already registered", ErrGoNapcat)
 
+	ErrUnsupportedOperation = fmt.Errorf("%w: unsupported operation", ErrGoNapcat)
+	ErrTimeout              = fmt.Errorf("%w: timeout", ErrGoNapcat)
+
 	ErrTypeAssertion = errors.New("type assertion failed")
 )

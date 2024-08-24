@@ -57,6 +57,10 @@ func (d *Dispatcher) RegisterHandlerRequest(handler Handler) {
 	d.handlers.request = append(d.handlers.request, handler)
 }
 
+func (d *Dispatcher) RegisterCommand(command ICommand) {
+	d.commandCenter.RegisterCommand(command)
+}
+
 func (d *Dispatcher) Dispatch(event IEvent) {
 	for _, handler := range d.handlers.all {
 		if d.isGoroutineMode {

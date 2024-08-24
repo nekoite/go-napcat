@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/goccy/go-json"
 	"github.com/nekoite/go-napcat/errors"
@@ -11,6 +12,7 @@ import (
 	"github.com/nekoite/go-napcat/qq"
 	"github.com/nekoite/go-napcat/utils"
 	"github.com/nekoite/go-napcat/ws"
+	"go.uber.org/zap"
 )
 
 type Action string
@@ -65,9 +67,11 @@ const (
 )
 
 type Sender struct {
-	conn   *ws.Client
-	sendId atomic.Int64
-	reqMap sync.Map
+	logger  *zap.Logger
+	conn    *ws.Client
+	timeout int
+	sendId  atomic.Int64
+	reqMap  sync.Map
 }
 
 type Req struct {
@@ -97,10 +101,12 @@ type SendMsgReqParams[T message.SendableMessage] struct {
 	AutoEscape  bool   `json:"auto_escape,omitempty"`
 }
 
-func NewSender(conn *ws.Client) *Sender {
+func NewSender(logger *zap.Logger, conn *ws.Client, timeout int) *Sender {
 	return &Sender{
-		sendId: atomic.Int64{},
-		conn:   conn,
+		logger:  logger.Named("api"),
+		sendId:  atomic.Int64{},
+		conn:    conn,
+		timeout: timeout,
 	}
 }
 
@@ -122,7 +128,7 @@ func (s *Sender) HandleApiResp(resp []byte) error {
 	if err != nil {
 		return err
 	}
-	if req, ok := s.reqMap.Load(int64(id)); ok {
+	if req, ok := s.reqMap.LoadAndDelete(int64(id)); ok {
 		req.(*Req).resp <- r
 		return nil
 	}
@@ -142,9 +148,13 @@ func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
 		return nil, err
 	}
 	s.conn.Send(raw)
-	resp := <-req.resp
-	s.reqMap.Delete(req.id)
-	return parseResp(req.action, resp)
+	select {
+	case resp := <-req.resp:
+		return parseResp(req.action, resp)
+	case <-time.After(time.Duration(s.timeout) * time.Second):
+		s.logger.Error("timeout", zap.String("action", string(action)), zap.Any("params", params), zap.Int("echo", int(req.id)))
+		return nil, errors.ErrTimeout
+	}
 }
 
 func (s *Sender) SendPrivateMsgString(userId int64, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {

@@ -65,9 +65,11 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	options := []kong.Option{
 		kong.Exit(func(i int) { parseResult.ExitCode = i }),
 		kong.Writers(&stdout, &stderr),
+		kong.Name(cmd.GetName()),
 	}
+	gram := cmd.GetNew()
 	k, err := kong.New(
-		cmd.GetNew(),
+		gram,
 		append(options, cmd.GetOptions()...)...,
 	)
 	if err != nil {
@@ -78,6 +80,7 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	if err != nil {
 		parseResult.Error = err
 	}
+	parseResult.ParsedArgs = gram
 	parseResult.Ctx = ctx
 	parseResult.Event = event
 	parseResult.StdOut = stdout.String()

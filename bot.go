@@ -39,7 +39,7 @@ func NewBot(cfg *config.BotConfig) *Bot {
 		Logger: &BotLogger{logger: logger},
 	}
 	bot.conn = ws.NewConn(logger, cfg, bot.onRecvWsMsg)
-	bot.api = api.NewSender(bot.conn)
+	bot.api = api.NewSender(logger, bot.conn, cfg.ApiTimeout)
 	return bot
 }
 
@@ -97,6 +97,10 @@ func (b *Bot) RegisterHandlerMeta(h event.Handler) {
 
 func (b *Bot) RegisterHandlerRequest(h event.Handler) {
 	b.dispatcher.RegisterHandlerRequest(h)
+}
+
+func (b *Bot) RegisterCommand(c event.ICommand) {
+	b.dispatcher.RegisterCommand(c)
 }
 
 func (b *Bot) Start() {
@@ -183,8 +187,8 @@ func (b *Bot) onRecvWsMsg(msg []byte) {
 		if b.cfg.UseGoroutine {
 			return
 		}
-		if t > 1*time.Second {
-			b.Logger.Info("event execution duration", zap.Duration("ms", t))
+		if t > 5*time.Second {
+			b.Logger.Warn("long event execution duration", zap.Duration("ms", t))
 		} else {
 			b.Logger.Debug("event execution duration", zap.Duration("ms", t))
 		}

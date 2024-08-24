@@ -3,6 +3,7 @@ module github.com/nekoite/go-napcat
 go 1.23
 
 require (
+	github.com/alecthomas/kong v0.9.0
 	github.com/goccy/go-json v0.10.3
 	github.com/goccy/go-yaml v1.12.0
 	github.com/gorilla/websocket v1.5.3
@@ -12,7 +13,6 @@ require (
 )
 
 require (
-	github.com/alecthomas/kong v0.9.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

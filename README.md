@@ -18,6 +18,10 @@
 > [!CAUTION]
 > `bot.Start()` 是非阻塞的。请使用管道或 `WaitGroup` 阻塞当前 Go 程。
 
+## 例子
+
+<https://github.com/nekoite/go-napcat/tree/master/examples>
+
 ## 事件与指令
 
 ### 事件处理顺序
@@ -28,11 +32,15 @@
 
 ### 事件
 
+包裹：`event`。
 
+事件类型：`EventType*`，`MetaEvent[Subtype|Type]*`，`MessageEvent[Subtype|Type]*`， `NoticeEvent[Subtype|Type]*`，`RequestEventType*`，`GroupRequestSubtype*`，`HonorType*`。
+
+所有事件都实现 `IEvent` 接口，使用 `GetEventType()` 查询事件类型后，将事件转为一个具体实现结构体。具体实现在 `*Event`。
 
 ### 指令
 
-指令使用 [kong](https://github.com/alecthomas/kong) 处理。处理方式和命令行一样。
+包裹：`event`。指令使用 [kong](https://github.com/alecthomas/kong) 处理。处理方式和命令行一样。
 
 默认情况下，kong 的 stdout，stderr 和返回值将变成参数（字符串或整形）传入回调函数。这一行为可以被重载。
 
@@ -62,6 +70,13 @@
 API 集成于 `Bot` 对象。返回的是 `*api.Resp[T]`。
 
 ### 扩展接口
+
+```go
+ext := api.NewExtension("name").WithActions(map[api.Action]api.GetNewResultFunc{
+    // ...
+})
+err := ext.Register()
+```
 
 #### 内置扩展
 

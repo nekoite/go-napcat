@@ -346,8 +346,8 @@ func NewMusic(t MusicType, id int64) MusicData {
 	return MusicData{BasicMusicData: BasicMusicData{Type: t}, BasicIdData: BasicIdData{Id: id}}
 }
 
-func NewCustomMusic(t MusicType, title, url, audio string) CustomMusicData {
-	return CustomMusicData{BasicMusicData: BasicMusicData{Type: t}, Title: title, Url: url, Audio: audio}
+func NewCustomMusic(title, url, audio string) CustomMusicData {
+	return CustomMusicData{BasicMusicData: BasicMusicData{Type: MusicTypeCustom}, Title: title, Url: url, Audio: audio}
 }
 
 func NewReply(id qq.MessageId) ReplyData {

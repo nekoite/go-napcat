@@ -18,6 +18,7 @@ type BotConfig struct {
 	Id           int64
 	Debug        bool
 	UseGoroutine bool
+	ApiTimeout   int
 }
 
 type LogConfig struct {
@@ -32,6 +33,7 @@ var defaultBotCfg = BotConfig{
 		Port:     3001,
 		Endpoint: "/",
 	},
+	ApiTimeout: 30000,
 }
 
 func BotConfigFromYamlFile(path string) (*BotConfig, error) {
@@ -65,13 +67,18 @@ func (c *BotConfig) WithWs(host string, port int, endpoint string) *BotConfig {
 	return c
 }
 
-func (c *BotConfig) EnableDebugMode(debug bool) *BotConfig {
+func (c *BotConfig) DebugMode(debug bool) *BotConfig {
 	c.Debug = debug
 	return c
 }
 
-func (c *BotConfig) EnableGoroutineMode(useGoroutine bool) *BotConfig {
+func (c *BotConfig) GoroutineMode(useGoroutine bool) *BotConfig {
 	c.UseGoroutine = useGoroutine
+	return c
+}
+
+func (c *BotConfig) WithApiTimeout(timeout int) *BotConfig {
+	c.ApiTimeout = timeout
 	return c
 }
 
