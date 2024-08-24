@@ -1,6 +1,6 @@
 # go-napcat
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/nekoite/go-napcat.svg)](https://pkg.go.dev/github.com/nekoite/go-napcat) [![Go Report Card](https://goreportcard.com/badge/github.com/nekoite/go-napcat)](https://goreportcard.com/report/github.com/nekoite/go-napcat) ![Build Status](https://github.com/nekoite/go-napcat/actions/workflows/build.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nekoite/go-napcat.svg)](https://pkg.go.dev/github.com/nekoite/go-napcat) [![Go Report Card](https://goreportcard.com/badge/github.com/nekoite/go-napcat)](https://goreportcard.com/report/github.com/nekoite/go-napcat) ![Build Status](https://github.com/nekoite/go-napcat/actions/workflows/build.yml/badge.svg) [![codecov](https://codecov.io/gh/nekoite/go-napcat/graph/badge.svg?token=ZW82R4ZV7F)](https://codecov.io/gh/nekoite/go-napcat)
 
 上啊！瞌睡猫猫！
 
