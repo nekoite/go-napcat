@@ -151,7 +151,7 @@ func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
 	select {
 	case resp := <-req.resp:
 		return parseResp(req.action, resp)
-	case <-time.After(time.Duration(s.timeout) * time.Second):
+	case <-time.After(time.Duration(s.timeout) * time.Millisecond):
 		s.logger.Error("timeout", zap.String("action", string(action)), zap.Any("params", params), zap.Int("echo", int(req.id)))
 		return nil, errors.ErrTimeout
 	}

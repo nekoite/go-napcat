@@ -382,9 +382,7 @@ func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {
 		switch NoticeEventType(typeInfos[2].String()) {
 		case NoticeEventTypeGroupUpload:
 			e = new(NoticeEventGroupUpload)
-		case NoticeEventTypeGroupIncrease:
-			fallthrough
-		case NoticeEventTypeGroupDecrease:
+		case NoticeEventTypeGroupIncrease, NoticeEventTypeGroupDecrease:
 			e = new(NoticeEventGroupOperation)
 		case NoticeEventTypeGroupBan:
 			e = new(NoticeEventGroupBan)
@@ -398,9 +396,7 @@ func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {
 			switch NoticeEventSubtype(typeInfos[4].String()) {
 			case NoticeEventSubtypeHonor:
 				e = new(NoticeEventGroupHonor)
-			case NoticeEventSubtypeLuckyKing:
-				fallthrough
-			case NoticeEventSubtypePoke:
+			case NoticeEventSubtypeLuckyKing, NoticeEventSubtypePoke:
 				e = new(NoticeEventGroupNotify)
 			default:
 				err = errors.ErrUnknownNoticeEvent

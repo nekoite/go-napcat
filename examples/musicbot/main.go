@@ -13,6 +13,7 @@ import (
 	gonapcat "github.com/nekoite/go-napcat"
 	"github.com/nekoite/go-napcat/config"
 	"github.com/nekoite/go-napcat/event"
+	"github.com/nekoite/go-napcat/extensions/napcat"
 	"github.com/nekoite/go-napcat/message"
 	"github.com/tidwall/gjson"
 )
@@ -22,7 +23,9 @@ type MusicCommandArgs struct {
 	SongName string `arg:"" required:"" help:"歌曲名"`
 }
 
-type MusicCommand struct{}
+type MusicCommand struct {
+	bot *gonapcat.Bot
+}
 
 func (c *MusicCommand) GetName() (string, event.CmdNameMode) {
 	return "music", event.CmdNameModeNormal
@@ -59,6 +62,7 @@ func (c *MusicCommand) OnCommand(parseResult *event.ParseResult) {
 			parseResult.Event.Reply(message.NewText(err.Error()).Message().AsChain(), true)
 			return
 		}
+		napcat.SetMsgEmojiLike(c.bot, parseResult.Event.GetMessageId(), 128166)
 		parseResult.Event.Reply(message.NewMusic(message.MusicTypeQQ, id).Message().AsChain(), false)
 	default:
 		parseResult.Event.Reply(message.NewText("暂不支持").Message().AsChain(), true)
@@ -83,9 +87,10 @@ func getQQMusicId(songName string) (int64, error) {
 }
 
 func main() {
+	napcat.Extension.Register()
 	gonapcat.Init(config.DefaultLogConfig().WithStderr().WithLevel("debug"))
 	bot := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
-	bot.RegisterCommand(&MusicCommand{})
+	bot.RegisterCommand(&MusicCommand{bot: bot})
 	bot.Start()
 	defer gonapcat.Finalize()
 

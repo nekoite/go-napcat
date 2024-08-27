@@ -249,22 +249,6 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// func (m *Message) unmarshalForCustomNode(fields *gjson.Result) error {
-// 	var d CustomNodeData
-// 	data := fields.Get("data")
-// 	d.UserId = data.Get("user_id").Int()
-// 	d.Nickname = data.Get("nickname").String()
-// 	if data.Get("content").IsArray() {
-// 		var content Chain
-// 		if err := json.Unmarshal([]byte(data.Get("content").Raw), &content); err != nil {
-// 			return err
-// 		}
-// 		d.Content = content
-// 	}
-// 	m.Data = d
-// 	return nil
-// }
-
 func GetMsgData[T any](msg *Message) T {
 	return msg.Data.(T)
 }

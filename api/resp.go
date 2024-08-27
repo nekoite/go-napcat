@@ -146,9 +146,7 @@ func parseResp(action Action, data apiResp) (IResp, error) {
 	}
 	var resp any
 	switch action {
-	case ActionSendPrivateMsg:
-		fallthrough
-	case ActionSendGroupMsg:
+	case ActionSendPrivateMsg, ActionSendGroupMsg:
 		resp = &Resp[RespDataMessageId]{}
 	case ActionDeleteMsg:
 		resp = &Resp[utils.Void]{}
@@ -156,31 +154,19 @@ func parseResp(action Action, data apiResp) (IResp, error) {
 		resp = &Resp[RespDataMessage]{}
 	case ActionGetForwardMsg:
 		resp = &Resp[RespDataMessageOnly]{}
-	case ActionSendLike:
-		fallthrough
-	case ActionSetGroupKick:
-		fallthrough
-	case ActionSetGroupBan:
-		fallthrough
-	case ActionSetGroupAnonymousBan:
-		fallthrough
-	case ActionSetGroupWholeBan:
-		fallthrough
-	case ActionSetGroupAdmin:
-		fallthrough
-	case ActionSetGroupAnonymous:
-		fallthrough
-	case ActionSetGroupCard:
-		fallthrough
-	case ActionSetGroupLeave:
-		fallthrough
-	case ActionSetGroupName:
-		fallthrough
-	case ActionSetGroupSpecialTitle:
-		fallthrough
-	case ActionSetFriendAddRequest:
-		fallthrough
-	case ActionSetGroupAddRequest:
+	case ActionSendLike,
+		ActionSetGroupKick,
+		ActionSetGroupBan,
+		ActionSetGroupAnonymousBan,
+		ActionSetGroupWholeBan,
+		ActionSetGroupAdmin,
+		ActionSetGroupAnonymous,
+		ActionSetGroupCard,
+		ActionSetGroupLeave,
+		ActionSetGroupName,
+		ActionSetGroupSpecialTitle,
+		ActionSetFriendAddRequest,
+		ActionSetGroupAddRequest:
 		resp = &Resp[utils.Void]{}
 	case ActionGetLoginInfo:
 		resp = &Resp[RespDataLoginInfo]{}
@@ -204,21 +190,15 @@ func parseResp(action Action, data apiResp) (IResp, error) {
 		resp = &Resp[RespDataCsrfToken]{}
 	case ActionGetCredentials:
 		resp = &Resp[RespDataCredentials]{}
-	case ActionGetRecord:
-		fallthrough
-	case ActionGetImage:
+	case ActionGetRecord, ActionGetImage:
 		resp = &Resp[RespDataFile]{}
-	case ActionCanSendImage:
-		fallthrough
-	case ActionCanSendRecord:
+	case ActionCanSendImage, ActionCanSendRecord:
 		resp = &Resp[RespDataYesOrNo]{}
 	case ActionGetStatus:
 		resp = &Resp[ServerStatus]{}
 	case ActionGetVersionInfo:
 		resp = &Resp[RespDataVersionInfo]{}
-	case ActionSetRestart:
-		fallthrough
-	case ActionCleanCache:
+	case ActionSetRestart, ActionCleanCache:
 		resp = &Resp[utils.Void]{}
 	default:
 		if act, ok := extActions[action]; ok {
