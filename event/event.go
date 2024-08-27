@@ -32,10 +32,11 @@ type GroupRequestSubtype string
 type HonorType string
 
 const (
-	EventTypeMessage EventType = "message"
-	EventTypeNotice  EventType = "notice"
-	EventTypeRequest EventType = "request"
-	EventTypeMeta    EventType = "meta_event"
+	EventTypeMessageSent EventType = "message_sent"
+	EventTypeMessage     EventType = "message"
+	EventTypeNotice      EventType = "notice"
+	EventTypeRequest     EventType = "request"
+	EventTypeMeta        EventType = "meta_event"
 
 	MetaEventTypeLifecycle MetaEventType = "lifecycle"
 	MetaEventTypeHeartbeat MetaEventType = "heartbeat"
@@ -365,6 +366,8 @@ func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {
 	var err error
 
 	switch EventType(typeInfos[0].String()) {
+	case EventTypeMessageSent:
+		fallthrough
 	case EventTypeMessage:
 		switch MessageEventType(typeInfos[1].String()) {
 		case MessageEventTypePrivate:

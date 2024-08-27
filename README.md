@@ -44,7 +44,9 @@ go get -u github.com/nekoite/go-napcat
 
 事件类型：`EventType*`，`MetaEvent[Subtype|Type]*`，`MessageEvent[Subtype|Type]*`， `NoticeEvent[Subtype|Type]*`，`RequestEventType*`，`GroupRequestSubtype*`，`HonorType*`。
 
-所有事件都实现 `IEvent` 接口，使用 `GetEventType()` 查询事件类型后，将事件转为一个具体实现结构体。具体实现在 `*Event`。
+所有事件都实现 `IEvent` 接口，使用 `GetEventType()` 查询事件类型后，将事件转为一个具体实现结构体。具体实现在 `event.*Event` 结构体。
+
+可以使用 `event.GetAs` 函数做类型转换，失败返回 `nil`。使用 `event.GetAsUnsafe` 做类型转换，效果和 `e.(*T)` 一样，失败会 panic。使用 `event.GetAsOrError` 做类型转换，失败会返回 `nil, errors.ErrTypeAssertion`。
 
 ### 指令
 
