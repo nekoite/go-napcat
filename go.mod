@@ -3,6 +3,7 @@ module github.com/nekoite/go-napcat
 go 1.23
 
 require (
+	github.com/agiledragon/gomonkey/v2 v2.12.0
 	github.com/alecthomas/kong v0.9.0
 	github.com/goccy/go-json v0.10.3
 	github.com/goccy/go-yaml v1.12.0

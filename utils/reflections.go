@@ -24,7 +24,7 @@ func walkStructWithTag(v reflect.Value, tagPath []reflect.StructTag, f func(valu
 	return nil
 }
 
-func WalkStructWithTag(v any, f func(value reflect.Value, tagPath []reflect.StructTag) error) error {
+func WalkStructLeafWithTag(v any, f func(value reflect.Value, tagPath []reflect.StructTag) error) error {
 	if v == nil {
 		return nil
 	}

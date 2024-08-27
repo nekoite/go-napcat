@@ -59,7 +59,7 @@ func (m Message) buildDataSegmentString(sb *strings.Builder) {
 		}
 		return
 	}
-	utils.WalkStructWithTag(&m.Data, func(v reflect.Value, tagPath []reflect.StructTag) error {
+	utils.WalkStructLeafWithTag(&m.Data, func(v reflect.Value, tagPath []reflect.StructTag) error {
 		tag := tagPath[len(tagPath)-1]
 		if tag.Get("json") == "-" {
 			return nil
@@ -198,7 +198,7 @@ func parseMessagePart(ty MessageType, parts map[string]string) (Message, error) 
 		m.Data = parts
 		return m, nil
 	}
-	err := utils.WalkStructWithTag(m.Data, func(v reflect.Value, tagPath []reflect.StructTag) error {
+	err := utils.WalkStructLeafWithTag(m.Data, func(v reflect.Value, tagPath []reflect.StructTag) error {
 		tag := tagPath[len(tagPath)-1]
 		if tag.Get("json") == "-" {
 			return nil
