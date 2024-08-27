@@ -94,21 +94,6 @@ type IEvent interface {
 	GetSelfId() int64
 	GetEventType() EventType
 
-	AsMessageEvent() IMessageEvent
-	AsPrivateMessageEvent() *PrivateMessageEvent
-	AsGroupMessageEvent() *GroupMessageEvent
-	AsNoticeEventGroupUpload() *NoticeEventGroupUpload
-	AsNoticeEventGroupOperation() *NoticeEventGroupOperation
-	AsNoticeEventGroupBan() *NoticeEventGroupBan
-	AsNoticeEventGroupRecall() *NoticeEventGroupRecall
-	AsNoticeEventFriendRecall() *NoticeEventFriendRecall
-	AsNoticeEventFriendAdd() *NoticeEventFriendAdd
-	AsNoticeEventGroupNotify() *NoticeEventGroupNotify
-	AsNoticeEventGroupHonor() *NoticeEventGroupHonor
-	AsFriendRequestEvent() *FriendRequestEvent
-	AsGroupRequestEvent() *GroupRequestEvent
-	AsMetaEvent() *MetaEvent
-
 	// PreventDefault 阻止事件继续传播。别问我为什么取这个名字。
 	// 当 BotConfig.UseGoroutine 为 true 时，这个函数无效。
 	PreventDefault()

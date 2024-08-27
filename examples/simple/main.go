@@ -16,8 +16,8 @@ func main() {
 	gonapcat.Init(config.DefaultLogConfig().WithStderr().WithLevel("debug"))
 	bot := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
 	bot.RegisterHandlerPrivateMessage(func(e event.IEvent) {
-		bot.Logger.Info("Received private message", zap.Any("event", e.AsPrivateMessageEvent()))
-		msgId, err := e.AsPrivateMessageEvent().Reply(message.NewText("你好").Message().AsChain(), true)
+		bot.Logger.Info("Received private message", zap.Any("event", e.(*event.PrivateMessageEvent)))
+		msgId, err := e.(*event.PrivateMessageEvent).Reply(message.NewText("你好").Message().AsChain(), true)
 		if err != nil {
 			bot.Logger.Error("Failed to send private message", zap.Error(err))
 			return
