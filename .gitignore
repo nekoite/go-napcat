@@ -8,6 +8,8 @@
 
 *.yaml
 *.yml
+!.*.yml
+!.*.yaml
 
 3p/
 
