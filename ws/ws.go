@@ -11,17 +11,15 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
-)
-
 type Client struct {
 	logger    *zap.Logger
 	conn      *websocket.Conn
 	interrupt chan struct{}
 	send      chan []byte
+
+	writeWait  time.Duration
+	pongWait   time.Duration
+	pingPeriod time.Duration
 
 	onRecvMsg func([]byte)
 }
@@ -39,11 +37,14 @@ func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) 
 	}
 	interrupt := make(chan struct{}, 1)
 	wsConn := &Client{
-		logger:    logger,
-		conn:      conn,
-		interrupt: interrupt,
-		send:      make(chan []byte, 256),
-		onRecvMsg: onRecvMsg,
+		logger:     logger,
+		conn:       conn,
+		interrupt:  interrupt,
+		send:       make(chan []byte, 256),
+		writeWait:  time.Duration(cfg.Ws.Timeout) * time.Millisecond,
+		pongWait:   time.Duration(cfg.Ws.PongTimeout) * time.Millisecond,
+		pingPeriod: time.Duration(cfg.Ws.PingPeriod) * time.Millisecond,
+		onRecvMsg:  onRecvMsg,
 	}
 	return wsConn
 }
@@ -61,10 +62,10 @@ func (c *Client) readPump() {
 	defer func() {
 		c.conn.Close()
 	}()
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetReadDeadline(time.Now().Add(c.pongWait))
 	c.conn.SetPongHandler(func(string) error {
 		c.logger.Debug("received pong")
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		c.conn.SetReadDeadline(time.Now().Add(c.pongWait))
 		return nil
 	})
 	for {
@@ -83,7 +84,7 @@ func (c *Client) readPump() {
 }
 
 func (c *Client) writePump() {
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(c.pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
@@ -119,7 +120,7 @@ func (c *Client) writePump() {
 }
 
 func (c *Client) writeMessage(messageType int, data []byte) error {
-	c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	c.conn.SetWriteDeadline(time.Now().Add(c.writeWait))
 	return c.conn.WriteMessage(messageType, data)
 }
 

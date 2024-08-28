@@ -7,10 +7,13 @@ import (
 )
 
 type WsConfig struct {
-	Host     string
-	Port     int
-	Endpoint string
-	Token    string
+	Host        string
+	Port        int
+	Endpoint    string
+	Token       string
+	Timeout     int // in milliseconds
+	PingPeriod  int // in milliseconds
+	PongTimeout int // in milliseconds
 }
 
 type BotConfig struct {
@@ -29,9 +32,12 @@ type LogConfig struct {
 
 var defaultBotCfg = BotConfig{
 	Ws: WsConfig{
-		Host:     "localhost",
-		Port:     3001,
-		Endpoint: "/",
+		Host:        "localhost",
+		Port:        3001,
+		Endpoint:    "/",
+		Timeout:     10000,
+		PingPeriod:  54000,
+		PongTimeout: 60000,
 	},
 	ApiTimeout: 30000,
 }
