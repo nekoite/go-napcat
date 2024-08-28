@@ -150,7 +150,11 @@ func getArgs(s string, splitBySpaceOnly bool) []string {
 	SW:
 		switch c {
 		case ' ':
-			appendSbToRes()
+			if !inCQ {
+				appendSbToRes()
+			} else {
+				sb.WriteByte(c)
+			}
 		case '"':
 			if inCQ {
 				sb.WriteByte('"')
@@ -201,24 +205,16 @@ func getArgs(s string, splitBySpaceOnly bool) []string {
 			}
 		case '[':
 			inCQ = true
-			if splitBySpaceOnly {
-				sb.WriteByte(c)
-			} else {
+			if !splitBySpaceOnly {
 				appendSbToRes()
-				for i < len(s) {
-					sb.WriteByte(s[i])
-					if s[i] == ']' {
-						if !splitBySpaceOnly {
-							appendSbToRes()
-						}
-						break
-					}
-					i++
-				}
 			}
+			sb.WriteByte(c)
 		case ']':
 			inCQ = false
-			fallthrough
+			sb.WriteByte(c)
+			if !splitBySpaceOnly {
+				appendSbToRes()
+			}
 		default:
 			sb.WriteByte(c)
 		}
