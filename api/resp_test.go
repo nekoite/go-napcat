@@ -108,7 +108,7 @@ func TestParseRespActionGetMsgPrivate(t *testing.T) {
 		assert.Equal(int64(123456), r0.Data.Time)
 		assert.Equal(MessageTypePrivate, r0.Data.MessageType)
 		if s, ok := r0.Data.Sender.(qq.Friend); ok {
-			assert.Equal(int64(123456), s.UserId)
+			assert.EqualValues(123456, s.UserId)
 			assert.Equal("nickname", s.Nickname)
 			assert.Equal(qq.SexMale, s.Sex)
 			assert.Equal(int32(18), s.Age)
@@ -168,7 +168,7 @@ func TestParseRespActionGetMsgGroup(t *testing.T) {
 		assert.Equal(int64(123456), r0.Data.Time)
 		assert.Equal(MessageTypeGroup, r0.Data.MessageType)
 		if s, ok := r0.Data.Sender.(qq.GroupUser); ok {
-			assert.Equal(int64(123456), s.UserId)
+			assert.EqualValues(123456, s.UserId)
 			assert.Equal("nickname", s.Nickname)
 			assert.Equal(qq.SexMale, s.Sex)
 			assert.Equal(int32(18), s.Age)
