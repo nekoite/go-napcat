@@ -1,8 +1,6 @@
 package message
 
 import (
-	"strconv"
-
 	"github.com/goccy/go-json"
 	"github.com/nekoite/go-napcat/qq"
 	"github.com/nekoite/go-napcat/utils"
@@ -45,6 +43,10 @@ const (
 	MusicType163    MusicType = "163"
 	MusicTypeXm     MusicType = "xm"
 	MusicTypeCustom MusicType = "custom"
+)
+
+var (
+	atAll = NewAt("all")
 )
 
 type Message struct {
@@ -152,9 +154,9 @@ type ForwardData BasicIdData
 type IdNodeData BasicIdData
 
 type CustomNodeData struct {
-	UserId   int64  `json:"user_id,string"`
-	Nickname string `json:"nickname"`
-	Content  any    `json:"content"`
+	UserId   qq.UserId `json:"user_id,string"`
+	Nickname string    `json:"nickname"`
+	Content  any       `json:"content"`
 }
 
 type XmlData struct {
@@ -279,11 +281,11 @@ func NewAt(qq string) AtData {
 }
 
 func NewAtAll() AtData {
-	return AtData{QQ: "all"}
+	return atAll
 }
 
-func NewAtUser(id int64) AtData {
-	return NewAt(strconv.Itoa(int(id)))
+func NewAtUser(id qq.UserId) AtData {
+	return NewAt(id.String())
 }
 
 func NewRps() RpsData {
@@ -342,7 +344,7 @@ func NewNode(id int64) IdNodeData {
 	return IdNodeData{Id: id}
 }
 
-func NewCustomNode[T SendableMessage](userId int64, nickname string, content T) CustomNodeData {
+func NewCustomNode[T SendableMessage](userId qq.UserId, nickname string, content T) CustomNodeData {
 	return CustomNodeData{UserId: userId, Nickname: nickname, Content: content}
 }
 

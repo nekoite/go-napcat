@@ -69,7 +69,7 @@ type GroupHonorListElement struct {
 }
 
 type RespDataGroupHonorInfo struct {
-	GroupId          int64 `json:"group_id"`
+	GroupId          qq.GroupId `json:"group_id"`
 	CurrentTalkative struct {
 		qq.BasicUserWithAvatar
 		DayCount int32 `json:"day_count"`

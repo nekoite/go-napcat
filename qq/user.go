@@ -1,26 +1,24 @@
 package qq
 
+import "strconv"
+
 type Sex string
 
-type GroupRole string
+type UserId int64
 
 const (
 	SexMale    Sex = "male"
 	SexFemale  Sex = "female"
 	SexUnknown Sex = "unknown"
-
-	GroupRoleOwner  GroupRole = "owner"
-	GroupRoleAdmin  GroupRole = "admin"
-	GroupRoleMember GroupRole = "member"
 )
 
 type IUser interface {
-	GetUserId() int64
+	GetUserId() UserId
 	GetNickname() string
 }
 
 type BasicUser struct {
-	UserId   int64  `json:"user_id"`
+	UserId   UserId `json:"user_id"`
 	Nickname string `json:"nickname"`
 }
 
@@ -46,10 +44,14 @@ type Friend struct {
 	Age int32 `json:"age"`
 }
 
-func (s BasicUser) GetUserId() int64 {
+func (s BasicUser) GetUserId() UserId {
 	return s.UserId
 }
 
 func (s BasicUser) GetNickname() string {
 	return s.Nickname
+}
+
+func (i UserId) String() string {
+	return strconv.FormatInt(int64(i), 10)
 }

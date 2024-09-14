@@ -94,11 +94,11 @@ type apiResp struct {
 }
 
 type SendMsgReqParams[T message.SendableMessage] struct {
-	MessageType string `json:"message_type"`
-	UserId      int64  `json:"user_id,omitempty"`
-	GroupId     int64  `json:"group_id,omitempty"`
-	Message     T      `json:"message"`
-	AutoEscape  bool   `json:"auto_escape,omitempty"`
+	MessageType string    `json:"message_type"`
+	UserId      qq.UserId `json:"user_id,omitempty"`
+	GroupId     int64     `json:"group_id,omitempty"`
+	Message     T         `json:"message"`
+	AutoEscape  bool      `json:"auto_escape,omitempty"`
 }
 
 func NewSender(logger *zap.Logger, conn *ws.Client, timeout int) *Sender {
@@ -157,7 +157,7 @@ func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
 	}
 }
 
-func (s *Sender) SendPrivateMsgString(userId int64, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {
+func (s *Sender) SendPrivateMsgString(userId qq.UserId, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {
 	return returnAsType[RespDataMessageId](s.SendRaw(ActionSendPrivateMsg, map[string]any{
 		"user_id":     userId,
 		"message":     message,
@@ -165,14 +165,14 @@ func (s *Sender) SendPrivateMsgString(userId int64, message string, autoEscape b
 	}))
 }
 
-func (s *Sender) SendPrivateMsg(userId int64, message *message.Chain) (*Resp[RespDataMessageId], error) {
+func (s *Sender) SendPrivateMsg(userId qq.UserId, message *message.Chain) (*Resp[RespDataMessageId], error) {
 	return returnAsType[RespDataMessageId](s.SendRaw(ActionSendPrivateMsg, map[string]any{
 		"user_id": userId,
 		"message": message,
 	}))
 }
 
-func (s *Sender) SendGroupMsgString(groupId int64, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {
+func (s *Sender) SendGroupMsgString(groupId qq.GroupId, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {
 	return returnAsType[RespDataMessageId](s.SendRaw(ActionSendGroupMsg, map[string]any{
 		"group_id":    groupId,
 		"message":     message,
@@ -180,7 +180,7 @@ func (s *Sender) SendGroupMsgString(groupId int64, message string, autoEscape bo
 	}))
 }
 
-func (s *Sender) SendGroupMsg(groupId int64, message *message.Chain) (*Resp[RespDataMessageId], error) {
+func (s *Sender) SendGroupMsg(groupId qq.GroupId, message *message.Chain) (*Resp[RespDataMessageId], error) {
 	return returnAsType[RespDataMessageId](s.SendRaw(ActionSendGroupMsg, map[string]any{
 		"group_id": groupId,
 		"message":  message,
@@ -215,7 +215,7 @@ func (s *Sender) GetForwardMsg(id string) (*Resp[RespDataMessageOnly], error) {
 	}))
 }
 
-func (s *Sender) SendLike(userId int64, times int) (*Resp[utils.Void], error) {
+func (s *Sender) SendLike(userId qq.UserId, times int) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSendLike, map[string]any{
 		"user_id": userId,
 		"times":   times,
@@ -223,7 +223,7 @@ func (s *Sender) SendLike(userId int64, times int) (*Resp[utils.Void], error) {
 }
 
 // SetGroupKick 将用户踢出群组。groupId 为群组 ID，userId 为要踢的用户 QQ，rejectAddRequest 为是否拒绝此人的加群请求。
-func (s *Sender) SetGroupKick(groupId int64, userId int64, rejectAddRequest bool) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupKick(groupId qq.GroupId, userId qq.UserId, rejectAddRequest bool) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupKick, map[string]any{
 		"group_id":           groupId,
 		"user_id":            userId,
@@ -232,7 +232,7 @@ func (s *Sender) SetGroupKick(groupId int64, userId int64, rejectAddRequest bool
 }
 
 // SetGroupBan 禁言用户。groupId 为群组 ID，userId 为要禁言的用户 QQ，duration 为禁言时长（秒），0 为解除禁言。
-func (s *Sender) SetGroupBan(groupId int64, userId int64, duration int) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupBan(groupId qq.GroupId, userId qq.UserId, duration int) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupBan, map[string]any{
 		"group_id": groupId,
 		"user_id":  userId,
@@ -240,7 +240,7 @@ func (s *Sender) SetGroupBan(groupId int64, userId int64, duration int) (*Resp[u
 	}))
 }
 
-func (s *Sender) SetGroupAnonymousBan(groupId int64, anonymous qq.AnonymousData, duration int) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupAnonymousBan(groupId qq.GroupId, anonymous *qq.AnonymousData, duration int) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupAnonymousBan, map[string]any{
 		"group_id":  groupId,
 		"anonymous": anonymous,
@@ -248,14 +248,14 @@ func (s *Sender) SetGroupAnonymousBan(groupId int64, anonymous qq.AnonymousData,
 	}))
 }
 
-func (s *Sender) SetGroupWholeBan(groupId int64, enable bool) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupWholeBan(groupId qq.GroupId, enable bool) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupWholeBan, map[string]any{
 		"group_id": groupId,
 		"enable":   enable,
 	}))
 }
 
-func (s *Sender) SetGroupAdmin(groupId int64, userId int64, enable bool) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupAdmin(groupId qq.GroupId, userId qq.UserId, enable bool) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupAdmin, map[string]any{
 		"group_id": groupId,
 		"user_id":  userId,
@@ -263,14 +263,14 @@ func (s *Sender) SetGroupAdmin(groupId int64, userId int64, enable bool) (*Resp[
 	}))
 }
 
-func (s *Sender) SetGroupAnonymous(groupId int64, enable bool) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupAnonymous(groupId qq.GroupId, enable bool) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupAnonymous, map[string]any{
 		"group_id": groupId,
 		"enable":   enable,
 	}))
 }
 
-func (s *Sender) SetGroupCard(groupId int64, userId int64, card string) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupCard(groupId qq.GroupId, userId qq.UserId, card string) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupCard, map[string]any{
 		"group_id": groupId,
 		"user_id":  userId,
@@ -278,21 +278,21 @@ func (s *Sender) SetGroupCard(groupId int64, userId int64, card string) (*Resp[u
 	}))
 }
 
-func (s *Sender) SetGroupName(groupId int64, name string) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupName(groupId qq.GroupId, name string) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupName, map[string]any{
 		"group_id": groupId,
 		"name":     name,
 	}))
 }
 
-func (s *Sender) SetGroupLeave(groupId int64, isDismiss bool) (*Resp[utils.Void], error) {
+func (s *Sender) LeaveGroup(groupId qq.GroupId, isDismiss bool) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupLeave, map[string]any{
 		"group_id":   groupId,
 		"is_dismiss": isDismiss,
 	}))
 }
 
-func (s *Sender) SetGroupSpecialTitle(groupId int64, userId int64, title string, duration int) (*Resp[utils.Void], error) {
+func (s *Sender) SetGroupSpecialTitle(groupId qq.GroupId, userId qq.UserId, title string, duration int) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupSpecialTitle, map[string]any{
 		"group_id": groupId,
 		"user_id":  userId,
@@ -322,7 +322,7 @@ func (s *Sender) GetLoginInfo() (*Resp[RespDataLoginInfo], error) {
 	return returnAsType[RespDataLoginInfo](s.SendRaw(ActionGetLoginInfo, nil))
 }
 
-func (s *Sender) GetStrangerInfo(userId int64, noCache bool) (*Resp[RespDataStrangerInfo], error) {
+func (s *Sender) GetStrangerInfo(userId qq.UserId, noCache bool) (*Resp[RespDataStrangerInfo], error) {
 	return returnAsType[RespDataStrangerInfo](s.SendRaw(ActionGetStrangerInfo, map[string]any{
 		"user_id":  userId,
 		"no_cache": noCache,
@@ -337,14 +337,14 @@ func (s *Sender) GetGroupList() (*Resp[RespDataGroupList], error) {
 	return returnAsType[RespDataGroupList](s.SendRaw(ActionGetGroupList, nil))
 }
 
-func (s *Sender) GetGroupInfo(groupId int64, noCache bool) (*Resp[RespDataGroupInfo], error) {
+func (s *Sender) GetGroupInfo(groupId qq.GroupId, noCache bool) (*Resp[RespDataGroupInfo], error) {
 	return returnAsType[RespDataGroupInfo](s.SendRaw(ActionGetGroupInfo, map[string]any{
 		"group_id": groupId,
 		"no_cache": noCache,
 	}))
 }
 
-func (s *Sender) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) (*Resp[RespDataGroupMemberInfo], error) {
+func (s *Sender) GetGroupMemberInfo(groupId qq.GroupId, userId qq.UserId, noCache bool) (*Resp[RespDataGroupMemberInfo], error) {
 	return returnAsType[RespDataGroupMemberInfo](s.SendRaw(ActionGetGroupMemberInfo, map[string]any{
 		"group_id": groupId,
 		"user_id":  userId,
@@ -352,13 +352,13 @@ func (s *Sender) GetGroupMemberInfo(groupId int64, userId int64, noCache bool) (
 	}))
 }
 
-func (s *Sender) GetGroupMemberList(groupId int64) (*Resp[RespDataGroupMemberList], error) {
+func (s *Sender) GetGroupMemberList(groupId qq.GroupId) (*Resp[RespDataGroupMemberList], error) {
 	return returnAsType[RespDataGroupMemberList](s.SendRaw(ActionGetGroupMemberList, map[string]any{
 		"group_id": groupId,
 	}))
 }
 
-func (s *Sender) GetGroupHonorInfo(groupId int64) (*Resp[RespDataGroupHonorInfo], error) {
+func (s *Sender) GetGroupHonorInfo(groupId qq.GroupId) (*Resp[RespDataGroupHonorInfo], error) {
 	return returnAsType[RespDataGroupHonorInfo](s.SendRaw(ActionGetGroupHonorInfo, map[string]any{
 		"group_id": groupId,
 		"type":     "all",

@@ -30,22 +30,22 @@ const (
 
 type RespDataGetGroupSystemMsg struct {
 	InvitedRequests []struct {
-		GroupId     int64  `json:"group_id"`
-		GroupName   string `json:"group_name"`
-		RequestId   string `json:"request_id"`
-		InvitorUin  int64  `json:"invitor_uin"`
-		InvitorNick string `json:"invitor_nick"`
-		Checked     bool   `json:"checked"`
-		Actor       int64  `json:"actor"`
+		GroupId     qq.GroupId `json:"group_id"`
+		GroupName   string     `json:"group_name"`
+		RequestId   string     `json:"request_id"`
+		InvitorUin  int64      `json:"invitor_uin"`
+		InvitorNick string     `json:"invitor_nick"`
+		Checked     bool       `json:"checked"`
+		Actor       int64      `json:"actor"`
 	} `json:"InvitedRequest"`
 	JoinRequests []struct {
-		GroupId       int64  `json:"group_id"`
-		GroupName     string `json:"group_name"`
-		RequestId     string `json:"request_id"`
-		RequesterUin  int64  `json:"requester_uin"`
-		RequesterNick string `json:"requester_nick"`
-		Checked       bool   `json:"checked"`
-		Actor         int64  `json:"actor"`
+		GroupId       qq.GroupId `json:"group_id"`
+		GroupName     string     `json:"group_name"`
+		RequestId     string     `json:"request_id"`
+		RequesterUin  int64      `json:"requester_uin"`
+		RequesterNick string     `json:"requester_nick"`
+		Checked       bool       `json:"checked"`
+		Actor         int64      `json:"actor"`
 	} `json:"join_requests"`
 }
 
@@ -98,7 +98,7 @@ func SetQQAvatar(bot *gonapcat.Bot, file string) (*api.Resp[utils.Void], error) 
 	}))
 }
 
-func GetGroupSystemMsg(bot *gonapcat.Bot, group int64) (*api.Resp[RespDataGetGroupSystemMsg], error) {
+func GetGroupSystemMsg(bot *gonapcat.Bot, group qq.GroupId) (*api.Resp[RespDataGetGroupSystemMsg], error) {
 	return returnAsType[RespDataGetGroupSystemMsg](bot.SendRaw(ActionGetGroupSystemMsg, nil))
 }
 
@@ -108,14 +108,14 @@ func GetFile(bot *gonapcat.Bot, fileId string) (*api.Resp[RespDataGetFile], erro
 	}))
 }
 
-func ForwardFriendSingleMsg(bot *gonapcat.Bot, userId int64, messageId qq.MessageId) (*api.Resp[utils.Void], error) {
+func ForwardFriendSingleMsg(bot *gonapcat.Bot, userId qq.UserId, messageId qq.MessageId) (*api.Resp[utils.Void], error) {
 	return returnAsType[utils.Void](bot.SendRaw(ActionForwardFriendSingleMsg, map[string]any{
 		"user_id":    userId,
 		"message_id": messageId,
 	}))
 }
 
-func ForwardGroupSingleMsg(bot *gonapcat.Bot, groupId int64, messageId qq.MessageId) (*api.Resp[utils.Void], error) {
+func ForwardGroupSingleMsg(bot *gonapcat.Bot, groupId qq.GroupId, messageId qq.MessageId) (*api.Resp[utils.Void], error) {
 	return returnAsType[utils.Void](bot.SendRaw(ActionForwardGroupSingleMsg, map[string]any{
 		"group_id":   groupId,
 		"message_id": messageId,
@@ -132,13 +132,13 @@ func SetMsgEmojiLike(bot *gonapcat.Bot, messageId qq.MessageId, emojiId int) (*a
 	}))
 }
 
-func MarkPrivateMsgAsRead(bot *gonapcat.Bot, userId int64) (*api.Resp[utils.Void], error) {
+func MarkPrivateMsgAsRead(bot *gonapcat.Bot, userId qq.UserId) (*api.Resp[utils.Void], error) {
 	return returnAsType[utils.Void](bot.SendRaw(ActionMarkPrivateMsgAsRead, map[string]any{
 		"user_id": userId,
 	}))
 }
 
-func MarkGroupMsgAsRead(bot *gonapcat.Bot, groupId int64) (*api.Resp[utils.Void], error) {
+func MarkGroupMsgAsRead(bot *gonapcat.Bot, groupId qq.GroupId) (*api.Resp[utils.Void], error) {
 	return returnAsType[utils.Void](bot.SendRaw(ActionMarkGroupMsgAsRead, map[string]any{
 		"group_id": groupId,
 	}))
@@ -163,13 +163,13 @@ func GetFriendsWithCategory(bot *gonapcat.Bot) (*api.Resp[AnyResult], error) {
 	return returnAsType[map[string]any](bot.SendRaw(ActionGetFriendsWithCategory, nil))
 }
 
-func GetGroupFileCount(bot *gonapcat.Bot, groupId int64) (*api.Resp[RespDataGroupFileCount], error) {
+func GetGroupFileCount(bot *gonapcat.Bot, groupId qq.GroupId) (*api.Resp[RespDataGroupFileCount], error) {
 	return returnAsType[RespDataGroupFileCount](bot.SendRaw(ActionGetGroupFileCount, map[string]any{
 		"group_id": groupId,
 	}))
 }
 
-func GetGroupFileList(bot *gonapcat.Bot, groupId int64, startIndex, fileCount int) (*api.Resp[RespDataGroupFileList], error) {
+func GetGroupFileList(bot *gonapcat.Bot, groupId qq.GroupId, startIndex, fileCount int) (*api.Resp[RespDataGroupFileList], error) {
 	return returnAsType[RespDataGroupFileList](bot.SendRaw(ActionGetGroupFileList, map[string]any{
 		"group_id":    groupId,
 		"start_index": startIndex,
@@ -177,21 +177,21 @@ func GetGroupFileList(bot *gonapcat.Bot, groupId int64, startIndex, fileCount in
 	}))
 }
 
-func SetGroupFileFolder(bot *gonapcat.Bot, groupId int64, folderName string) (*api.Resp[AnyResult], error) {
+func SetGroupFileFolder(bot *gonapcat.Bot, groupId qq.GroupId, folderName string) (*api.Resp[AnyResult], error) {
 	return returnAsType[AnyResult](bot.SendRaw(ActionSetGroupFileFolder, map[string]any{
 		"group_id":    groupId,
 		"folder_name": folderName,
 	}))
 }
 
-func DelGroupFile(bot *gonapcat.Bot, groupId int64, fileId string) (*api.Resp[AnyResult], error) {
+func DelGroupFile(bot *gonapcat.Bot, groupId qq.GroupId, fileId string) (*api.Resp[AnyResult], error) {
 	return returnAsType[AnyResult](bot.SendRaw(ActionDelGroupFile, map[string]any{
 		"group_id": groupId,
 		"file_id":  fileId,
 	}))
 }
 
-func DelGroupFileFolder(bot *gonapcat.Bot, groupId int64, folderId string) (*api.Resp[AnyResult], error) {
+func DelGroupFileFolder(bot *gonapcat.Bot, groupId qq.GroupId, folderId string) (*api.Resp[AnyResult], error) {
 	return returnAsType[AnyResult](bot.SendRaw(ActionDelGroupFileFolder, map[string]any{
 		"group_id":  groupId,
 		"folder_id": folderId,

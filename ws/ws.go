@@ -13,6 +13,7 @@ import (
 
 type Client struct {
 	logger    *zap.Logger
+	setupFunc func() (*websocket.Conn, error)
 	conn      *websocket.Conn
 	interrupt chan struct{}
 	send      chan []byte
@@ -26,18 +27,25 @@ type Client struct {
 
 func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) *Client {
 	logger = logger.Named("ws")
-	var err error
-	u := url.URL{Scheme: "ws", Host: fmt.Sprintf("%s:%d", cfg.Ws.Host, cfg.Ws.Port), Path: cfg.Ws.Endpoint}
-	logger.Info("connecting to", zap.String("url", u.String()))
-	header := http.Header{}
-	header.Add("Authorization", fmt.Sprintf("Bearer %s", cfg.Ws.Token))
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), header)
+	setupFunc := func() (*websocket.Conn, error) {
+		u := url.URL{Scheme: "ws", Host: fmt.Sprintf("%s:%d", cfg.Ws.Host, cfg.Ws.Port), Path: cfg.Ws.Endpoint}
+		logger.Info("connecting to", zap.String("url", u.String()))
+		header := http.Header{}
+		header.Add("Authorization", fmt.Sprintf("Bearer %s", cfg.Ws.Token))
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), header)
+		if err != nil {
+			return nil, err
+		}
+		return conn, nil
+	}
+	conn, err := setupFunc()
 	if err != nil {
 		logger.Fatal("dial:", zap.Error(err))
 	}
 	interrupt := make(chan struct{}, 1)
 	wsConn := &Client{
 		logger:     logger,
+		setupFunc:  setupFunc,
 		conn:       conn,
 		interrupt:  interrupt,
 		send:       make(chan []byte, 256),
@@ -51,6 +59,17 @@ func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) 
 
 func (c *Client) Start() {
 	c.setupConn()
+}
+
+func (c *Client) retry() error {
+	var err error
+	c.conn, err = c.setupFunc()
+	if err != nil {
+		c.logger.Error("failed to reconnect", zap.Error(err))
+		return err
+	}
+	c.setupConn()
+	return nil
 }
 
 func (c *Client) setupConn() {
@@ -80,6 +99,11 @@ func (c *Client) readPump() {
 		if c.onRecvMsg != nil {
 			go c.onRecvMsg(message)
 		}
+	}
+	c.logger.Warn("connection closed unexpectedly, reconnecting...")
+	err := c.retry()
+	if err != nil {
+		return
 	}
 }
 

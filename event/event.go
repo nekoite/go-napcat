@@ -92,7 +92,7 @@ const (
 
 type IEvent interface {
 	GetTime() int64
-	GetSelfId() int64
+	GetSelfId() qq.UserId
 	GetEventType() EventType
 
 	// PreventDefault 阻止事件继续传播。别问我为什么取这个名字。
@@ -117,7 +117,7 @@ type IMessageEvent interface {
 
 type BaseEvent struct {
 	Time      int64     `json:"time"`
-	SelfId    int64     `json:"self_id"`
+	SelfId    qq.UserId `json:"self_id"`
 	EventType EventType `json:"post_type"`
 
 	isPrevented bool        `json:"-"`
@@ -129,7 +129,7 @@ func (e *BaseEvent) GetTime() int64 {
 	return e.Time
 }
 
-func (e *BaseEvent) GetSelfId() int64 {
+func (e *BaseEvent) GetSelfId() qq.UserId {
 	return e.SelfId
 }
 
@@ -162,7 +162,7 @@ type MessageEvent struct {
 	MessageType MessageEventType    `json:"message_type"`
 	SubType     MessageEventSubtype `json:"sub_type"`
 	MessageId   qq.MessageId        `json:"message_id"`
-	UserId      int64               `json:"user_id"`
+	UserId      qq.UserId           `json:"user_id"`
 	Message     *message.Chain      `json:"message"`
 	RawMessage  string              `json:"raw_message"`
 	Font        int32               `json:"font"`
@@ -175,7 +175,7 @@ type PrivateMessageEvent struct {
 
 type GroupMessageEvent struct {
 	MessageEvent
-	GroupId   int64            `json:"group_id"`
+	GroupId   qq.GroupId       `json:"group_id"`
 	Anonymous qq.AnonymousData `json:"anonymous"`
 	Sender    qq.GroupUser     `json:"sender"`
 }
@@ -184,12 +184,12 @@ type NoticeEvent struct {
 	BaseEvent
 	NoticeType NoticeEventType    `json:"notice_type"`
 	SubType    NoticeEventSubtype `json:"sub_type"`
-	UserId     int64              `json:"user_id"`
+	UserId     qq.UserId          `json:"user_id"`
 }
 
 type GroupNoticeEvent struct {
 	NoticeEvent
-	GroupId int64 `json:"group_id"`
+	GroupId qq.GroupId `json:"group_id"`
 }
 
 type NoticeEventGroupUpload struct {
@@ -204,7 +204,7 @@ type NoticeEventGroupUpload struct {
 
 type NoticeEventGroupOperation struct {
 	GroupNoticeEvent
-	OperatorId int64 `json:"operator_id"`
+	OperatorId qq.UserId `json:"operator_id"`
 }
 
 type NoticeEventGroupBan struct {
@@ -226,7 +226,7 @@ type NoticeEventFriendAdd NoticeEvent
 
 type NoticeEventGroupNotify struct {
 	GroupNoticeEvent
-	TargetId int64 `json:"target_id"`
+	TargetId qq.UserId `json:"target_id"`
 }
 
 type NoticeEventGroupHonor struct {
@@ -237,7 +237,7 @@ type NoticeEventGroupHonor struct {
 type RequestEvent struct {
 	BaseEvent
 	RequestType RequestEventType `json:"request_type"`
-	UserId      int64            `json:"user_id"`
+	UserId      qq.UserId        `json:"user_id"`
 	Comment     string           `json:"comment"`
 	Flag        string           `json:"flag"`
 }
@@ -247,7 +247,7 @@ type FriendRequestEvent RequestEvent
 type GroupRequestEvent struct {
 	RequestEvent
 	SubType GroupRequestSubtype `json:"sub_type"`
-	GroupId int64               `json:"group_id"`
+	GroupId qq.GroupId          `json:"group_id"`
 }
 
 type MetaEvent struct {
@@ -340,21 +340,25 @@ func (e *GroupMessageEvent) ReplyString(msg string, autoEscape bool, quote bool,
 	return resp.Data.MessageId, nil
 }
 
+// Approve 同意好友请求
 func (e *FriendRequestEvent) Approve(remark string) error {
 	_, err := e.apiSender.SetFriendAddRequest(e.Flag, true, remark)
 	return err
 }
 
+// Reject 拒绝好友请求，reason 为拒绝理由
 func (e *FriendRequestEvent) Reject(reason string) error {
 	_, err := e.apiSender.SetFriendAddRequest(e.Flag, false, reason)
 	return err
 }
 
+// Approve 同意加群请求
 func (e *GroupRequestEvent) Approve() error {
 	_, err := e.apiSender.SetGroupAddRequest(e.Flag, string(e.SubType), true, "")
 	return err
 }
 
+// Reject 拒绝加群请求，reason 为拒绝理由
 func (e *GroupRequestEvent) Reject(reason string) error {
 	_, err := e.apiSender.SetGroupAddRequest(e.Flag, string(e.SubType), false, reason)
 	return err

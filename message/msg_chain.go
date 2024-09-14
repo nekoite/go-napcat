@@ -42,6 +42,18 @@ func (mc *Chain) AddText(text string) {
 	mc.AddMessages(NewText(text).Message())
 }
 
+func (mc *Chain) AddAt(userId string) {
+	mc.AddMessages(NewAt(userId).Message())
+}
+
+func (mc *Chain) AddAtUser(userId qq.UserId) {
+	mc.AddMessages(NewAt(userId.String()).Message())
+}
+
+func (mc *Chain) AddAtAll() {
+	mc.AddMessages(NewAtAll().Message())
+}
+
 func (mc *Chain) AppendChain(chain Chain) {
 	mc.AddMessages(chain.Messages...)
 }
