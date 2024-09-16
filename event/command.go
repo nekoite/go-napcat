@@ -32,12 +32,16 @@ type ICommand interface {
 	GetNew() any
 	GetOptions() []kong.Option
 	SplitBySpaceOnly() bool
-	Preprocess(remaining string)
 	OnCommand(parseResult *ParseResult)
 }
 
+type ICommandWithPreprocess interface {
+	Preprocess(remaining string) string
+}
+
 type CommandCenter struct {
-	logger *zap.Logger
+	logger       *zap.Logger
+	globalPrefix string
 
 	Commands       map[string]ICommand
 	PrefixCommands []ICommand
@@ -67,6 +71,13 @@ func (c *CommandCenter) RegisterCommand(command ICommand) {
 	}
 }
 
+func (c *CommandCenter) SetGlobalCommandPrefix(prefix string) {
+	if len(prefix) == 0 {
+		return
+	}
+	c.globalPrefix = prefix
+}
+
 func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	if len(c.Commands) == 0 && len(c.PrefixCommands) == 0 {
 		return
@@ -94,7 +105,11 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 		c.logger.Error("failed to create kong", zap.Error(err))
 		return
 	}
-	ctx, err := k.Parse(getArgs(rawMsg[len(prefix):], cmd.SplitBySpaceOnly()))
+	remaining := rawMsg[len(prefix):]
+	if preprocessCmd, ok := cmd.(ICommandWithPreprocess); ok {
+		remaining = preprocessCmd.Preprocess(remaining)
+	}
+	ctx, err := k.Parse(getArgs(remaining, cmd.SplitBySpaceOnly()))
 	if err != nil {
 		parseResult.Error = err
 	}
@@ -110,6 +125,9 @@ func (c *CommandCenter) getCommand(raw string) (ICommand, string) {
 	pref := getPrefix(raw)
 	if len(pref) == 0 {
 		return nil, ""
+	}
+	if c.globalPrefix != "" && strings.HasPrefix(pref, c.globalPrefix) {
+		pref = pref[len(c.globalPrefix):]
 	}
 	for _, cmd := range c.PrefixCommands {
 		p, _ := cmd.GetName()

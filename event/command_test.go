@@ -31,8 +31,6 @@ func (c *testCommand) SplitBySpaceOnly() bool {
 	return c.splitBySpaceOnly
 }
 
-func (c *testCommand) Preprocess(remaining string) {}
-
 func (c *testCommand) OnCommand(parseResult *ParseResult) {
 	c.onCommand(parseResult)
 }

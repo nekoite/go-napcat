@@ -58,13 +58,19 @@ go get -u github.com/nekoite/go-napcat
 
 #### 定义
 
-想要定义一个指令，需要实现 `event.ICommand` 接口。其中，`GetName()` 返回指令名称或前缀，以及名称模式。返回的指令名称不需要经过转义。**指令名称中不能包含空格。**
+想要定义一个指令，需要实现 `event.ICommand` 接口。其中，`GetName()` 返回指令名称或前缀，以及名称模式。返回的指令名称不需要经过转义。**指令名称或前缀中不能包含空格，且只能是普通字符串（不能有 CQ 码）。**如果想要绕过这一限制，请使用事件监听器。
 
 首先，指令名称是从开头到*第一个非文本元素*或*第一个空格*为止的字符串。例如，`send x y z` 的指令名是 `send`，`send[CQ:image,file=./a.jpg]` 的指令名也是 `send`。
 
 如果名称模式为 `CmdNameModePrefix`，则提供的名称将作为前缀与上述处理后的指令名称匹配。例如，如果消息是 `prefABC`，而 `GetName()` 返回 `("pref", CmdNameModePrefix)`，则匹配成功，并且指令名称是 `pref`，剩余部分是 `ABC`。消息前缀将先被反转义后作比较。
 
 如果名称模式为 `CmdNameModeNormal`，则直接用处理后得到的指令名称反转义后进行匹配查找。
+
+#### 全局指令激活前缀
+
+全局激活前缀是指只有在消息开头有这个字符串时，指令才会被激活并检查。
+
+调用 `bot.SetGlobalCommandPrefix` 函数来设置前缀。这个字符串会被从消息中移除后，剩下的部分将被传递给指令。若设置为空字符串，则表示没有激活前缀（默认情况，与不调用此函数一样）。与前缀指令一样，前缀中不能包含空格，且只能是普通字符串。
 
 #### 指令的参数分割
 
@@ -81,7 +87,7 @@ go get -u github.com/nekoite/go-napcat
 > [!NOTE]
 > CQ 码中的引号与转义字符不会有任何影响
 
-`event.ICommand::Preprocess(remaining string)` 接口函数用于对消息在分割之前进行预处理。这里传入的 `remaining` 参数将是除去指令名称的剩余的分割之前的字符串。
+`event.ICommandWithPreprocess::Preprocess(remaining string)` 接口函数用于对消息在分割之前进行预处理。这里传入的 `remaining` 参数将是除去指令名称的剩余的分割之前的字符串。如果指令实现这个接口，则会在分割前调用此函数。如果不实现这个接口，则直接进行分割。
 
 ## OneBot WebSocket API 调用
 

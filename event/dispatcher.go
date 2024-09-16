@@ -61,6 +61,10 @@ func (d *Dispatcher) RegisterCommand(command ICommand) {
 	d.commandCenter.RegisterCommand(command)
 }
 
+func (d *Dispatcher) SetGlobalCommandPrefix(prefix string) {
+	d.commandCenter.SetGlobalCommandPrefix(prefix)
+}
+
 func (d *Dispatcher) Dispatch(event IEvent) {
 	for _, handler := range d.handlers.all {
 		if d.isGoroutineMode {

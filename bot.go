@@ -118,6 +118,10 @@ func (b *Bot) RegisterCommand(c event.ICommand) {
 	b.dispatcher.RegisterCommand(c)
 }
 
+func (b *Bot) SetGlobalCommandPrefix(prefix string) {
+	b.dispatcher.SetGlobalCommandPrefix(prefix)
+}
+
 func (b *Bot) Start() error {
 	b.conn.Start()
 	err := b.initializeBotInfo()
