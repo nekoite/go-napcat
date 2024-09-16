@@ -59,7 +59,7 @@ func (m Message) buildDataSegmentString(sb *strings.Builder) {
 		}
 		return
 	}
-	utils.WalkStructLeafWithTag(&m.Data, func(v reflect.Value, tagPath []reflect.StructTag) error {
+	utils.WalkStructLeafWithTag(m.Data, func(v reflect.Value, tagPath []reflect.StructTag) error {
 		tag := tagPath[len(tagPath)-1]
 		if tag.Get("json") == "-" {
 			return nil
@@ -242,7 +242,6 @@ func parseMessagePart(ty MessageType, parts map[string]string) (Message, error) 
 		}
 		return nil
 	})
-	m.Data = utils.DerefAny(m.Data)
 	return m, err
 }
 

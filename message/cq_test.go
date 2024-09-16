@@ -28,10 +28,10 @@ func TestChainToString(t *testing.T) {
 	assert := assert.New(t)
 	chain := Chain{
 		Messages: []Message{
-			{Type: MessageTypeText, Data: TextData{Text: "Hello, w=orld!&?"}},
-			{Type: MessageTypeFace, Data: FaceData{Id: 1}},
-			{Type: MessageTypeAt, Data: AtData{QQ: "123456"}},
-			{Type: MessageTypeText, Data: TextData{Text: "another&text"}},
+			{Type: MessageTypeText, Data: &TextData{Text: "Hello, w=orld!&?"}},
+			{Type: MessageTypeFace, Data: &FaceData{Id: 1}},
+			{Type: MessageTypeAt, Data: &AtData{QQ: "123456"}},
+			{Type: MessageTypeText, Data: &TextData{Text: "another&text"}},
 		},
 	}
 	assert.Equal("Hello&#44; w=orld!&amp;?[CQ:face,id=1][CQ:at,qq=123456]another&amp;text", chain.String())
@@ -42,7 +42,7 @@ func TestTextCQToChain(t *testing.T) {
 	cq := "Hello&#44; w=orld!&amp;?"
 	expected := &Chain{
 		Messages: []Message{
-			{Type: MessageTypeText, Data: TextData{Text: "Hello, w=orld!&?"}},
+			{Type: MessageTypeText, Data: &TextData{Text: "Hello, w=orld!&?"}},
 		},
 	}
 	actual, err := ParseCQString(cq)
@@ -55,7 +55,7 @@ func TestFaceCQToChain(t *testing.T) {
 	cq := "[CQ:face,id=1]"
 	expected := &Chain{
 		Messages: []Message{
-			{Type: MessageTypeFace, Data: FaceData{Id: 1}},
+			{Type: MessageTypeFace, Data: &FaceData{Id: 1}},
 		},
 	}
 	actual, err := ParseCQString(cq)
@@ -68,13 +68,13 @@ func TestCustomNodeCQToChain(t *testing.T) {
 	cq := "[CQ:node,user_id=10001000,nickname=某人,content=&#91;CQ:face&#44;id=123&#93;哈喽&amp;amp;~]"
 	expected := &Chain{
 		Messages: []Message{
-			{Type: MessageTypeNode, Data: CustomNodeData{
+			{Type: MessageTypeNode, Data: &CustomNodeData{
 				UserId:   10001000,
 				Nickname: "某人",
 				Content: &Chain{
 					Messages: []Message{
-						{Type: MessageTypeFace, Data: FaceData{Id: 123}},
-						{Type: MessageTypeText, Data: TextData{Text: "哈喽&~"}},
+						{Type: MessageTypeFace, Data: &FaceData{Id: 123}},
+						{Type: MessageTypeText, Data: &TextData{Text: "哈喽&~"}},
 					},
 				},
 			}},
@@ -90,10 +90,10 @@ func TestChainCQToChain(t *testing.T) {
 	cq := "Hello&#44; w=orld!&amp;?[CQ:face,id=1][CQ:at,qq=123456]another&amp;text"
 	expected := &Chain{
 		Messages: []Message{
-			{Type: MessageTypeText, Data: TextData{Text: "Hello, w=orld!&?"}},
-			{Type: MessageTypeFace, Data: FaceData{Id: 1}},
-			{Type: MessageTypeAt, Data: AtData{QQ: "123456"}},
-			{Type: MessageTypeText, Data: TextData{Text: "another&text"}},
+			{Type: MessageTypeText, Data: &TextData{Text: "Hello, w=orld!&?"}},
+			{Type: MessageTypeFace, Data: &FaceData{Id: 1}},
+			{Type: MessageTypeAt, Data: &AtData{QQ: "123456"}},
+			{Type: MessageTypeText, Data: &TextData{Text: "another&text"}},
 		},
 	}
 	actual, err := ParseCQString(cq)

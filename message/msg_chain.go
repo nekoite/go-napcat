@@ -22,12 +22,8 @@ func (mc *Chain) PrependMessage(msg Message) {
 	mc.Messages = append([]Message{msg}, mc.Messages...)
 }
 
-func (mc *Chain) PrependMessages(msg ...Message) {
-	mc.Messages = append(msg, mc.Messages...)
-}
-
 func (mc *Chain) PrependChain(chain Chain) {
-	mc.PrependMessages(chain.Messages...)
+	mc.Messages = append(chain.Messages, mc.Messages...)
 }
 
 func (mc *Chain) AddMessage(msg Message) {
@@ -60,11 +56,61 @@ func (mc *Chain) AppendChain(chain Chain) {
 
 // SetSendAsAnonymous 设置是否匿名发送消息。当 ignore 为 true 时，将在无法匿名发送消息时继续发送消息。
 func (mc *Chain) SetSendAsAnonymous(ignore bool) {
-	mc.AddMessage(NewAnonymous(ignore).Message())
+	mc.PrependMessage(NewAnonymous(ignore).Message())
 }
 
 func (mc *Chain) SetReplyTo(msgId qq.MessageId) {
 	mc.PrependMessage(NewReply(msgId).Message())
+}
+
+// At 返回位置在 idx 的消息的拷贝。
+func (mc *Chain) At(idx int) Message {
+	return mc.Messages[idx]
+}
+
+// AtRef 返回位置在 idx 的消息的引用。
+func (mc *Chain) AtRef(idx int) *Message {
+	return &mc.Messages[idx]
+}
+
+func (mc *Chain) Len() int {
+	return len(mc.Messages)
+}
+
+// FirstOfType 返回第一个类型为 msgType 的消息的拷贝。如果没有找到，返回空消息。
+func (mc *Chain) FirstOfType(msgType MessageType) Message {
+	for _, msg := range mc.Messages {
+		if msg.Type == msgType {
+			return msg
+		}
+	}
+	return Message{}
+}
+
+// FirstOfTypeRef 返回第一个类型为 msgType 的消息的引用。如果没有找到，返回 nil。
+func (mc *Chain) FirstOfTypeRef(msgType MessageType) *Message {
+	for i := 0; i < len(mc.Messages); i++ {
+		if mc.Messages[i].Type == msgType {
+			return &mc.Messages[i]
+		}
+	}
+	return nil
+}
+
+func (mc *Chain) FirstText() *TextData {
+	m := mc.FirstOfTypeRef(MessageTypeText)
+	if m == nil {
+		return nil
+	}
+	return m.Data.(*TextData)
+}
+
+func (mc *Chain) FirstImage() *ImageData {
+	m := mc.FirstOfTypeRef(MessageTypeImage)
+	if m == nil {
+		return nil
+	}
+	return m.Data.(*ImageData)
 }
 
 func (mc *Chain) Clear() {

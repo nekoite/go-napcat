@@ -1,6 +1,8 @@
 package message
 
 import (
+	"reflect"
+
 	"github.com/goccy/go-json"
 	"github.com/nekoite/go-napcat/qq"
 	"github.com/nekoite/go-napcat/utils"
@@ -173,8 +175,107 @@ func (m Message) AsChain() *Chain {
 	return NewChain(m)
 }
 
-func (m *Message) GetTextData() TextData {
-	return GetMsgData[TextData](m)
+// GetTextData 获取文本消息数据，如果类型不匹配将引发 panic
+func (m Message) GetTextData() *TextData {
+	return GetMsgData[TextData](&m)
+}
+
+// GetImageData 获取图片消息数据，如果类型不匹配将引发 panic
+func (m Message) GetImageData() *ImageData {
+	return GetMsgData[ImageData](&m)
+}
+
+// GetFaceData 获取表情消息数据，如果类型不匹配将引发 panic
+func (m Message) GetFaceData() *FaceData {
+	return GetMsgData[FaceData](&m)
+}
+
+// GetRecordData 获取语音消息数据，如果类型不匹配将引发 panic
+func (m Message) GetRecordData() *RecordData {
+	return GetMsgData[RecordData](&m)
+}
+
+// GetVideoData 获取视频消息数据，如果类型不匹配将引发 panic
+func (m Message) GetVideoData() *VideoData {
+	return GetMsgData[VideoData](&m)
+}
+
+// GetAtData 获取 @ 消息数据，如果类型不匹配将引发 panic
+func (m Message) GetAtData() *AtData {
+	return GetMsgData[AtData](&m)
+}
+
+// GetRpsData 获取猜拳消息数据，如果类型不匹配将引发 panic
+func (m Message) GetRpsData() *RpsData {
+	return GetMsgData[RpsData](&m)
+}
+
+// GetDiceData 获取掷骰子消息数据，如果类型不匹配将引发 panic
+func (m Message) GetDiceData() *DiceData {
+	return GetMsgData[DiceData](&m)
+}
+
+// GetShakeData 获取窗口抖动消息数据，如果类型不匹配将引发 panic
+func (m Message) GetShakeData() *ShakeData {
+	return GetMsgData[ShakeData](&m)
+}
+
+// GetPokeData 获取戳一戳消息数据，如果类型不匹配将引发 panic
+func (m Message) GetPokeData() *PokeData {
+	return GetMsgData[PokeData](&m)
+}
+
+// GetShareData 获取分享消息数据，如果类型不匹配将引发 panic
+func (m Message) GetShareData() *ShareData {
+	return GetMsgData[ShareData](&m)
+}
+
+// GetContactData 获取联系人消息数据，如果类型不匹配将引发 panic
+func (m Message) GetContactData() *ContactData {
+	return GetMsgData[ContactData](&m)
+}
+
+// GetLocationData 获取位置消息数据，如果类型不匹配将引发 panic
+func (m Message) GetLocationData() *LocationData {
+	return GetMsgData[LocationData](&m)
+}
+
+// GetMusicData 获取音乐消息数据，如果类型不匹配将引发 panic
+func (m Message) GetMusicData() *MusicData {
+	return GetMsgData[MusicData](&m)
+}
+
+// GetReplyData 获取回复消息数据，如果类型不匹配将引发 panic
+func (m Message) GetReplyData() *ReplyData {
+	return GetMsgData[ReplyData](&m)
+}
+
+// GetForwardData 获取转发消息数据，如果类型不匹配将引发 panic
+func (m Message) GetForwardData() *ForwardData {
+	return GetMsgData[ForwardData](&m)
+}
+
+// GetCustomNodeData 获取自定义节点消息数据，如果类型不匹配将引发 panic
+func (m Message) GetCustomNodeData() any {
+	return GetMsgData[CustomNodeData](&m)
+}
+
+// GetXmlData 获取 XML 消息数据，如果类型不匹配将引发 panic
+func (m Message) GetXmlData() *XmlData {
+	return GetMsgData[XmlData](&m)
+}
+
+// GetJsonData 获取 JSON 消息数据，如果类型不匹配将引发 panic
+func (m Message) GetJsonData() *JsonData {
+	return GetMsgData[JsonData](&m)
+}
+
+func (m Message) IsInvalid() bool {
+	return m.Type == ""
+}
+
+func (m Message) GetDataPtr() any {
+	return reflect.ValueOf(m.Data).Addr().Interface()
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {
@@ -251,53 +352,63 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetMsgData[T any](msg *Message) T {
-	return msg.Data.(T)
+// GetMsgDataUnsafe 获取类型为 T 的消息数据，如果类型不匹配会引发 panic
+func GetMsgDataUnsafe[T any](msg *Message) *T {
+	return msg.Data.(*T)
 }
 
-func NewText(text string) TextData {
-	return TextData{Text: text}
+// GetMsgData 安全获取类型为 T 的消息数据，返回 nil 表示类型不匹配
+func GetMsgData[T any](msg *Message) *T {
+	data, ok := msg.Data.(*T)
+	if !ok {
+		return nil
+	}
+	return data
 }
 
-func NewFace(id int64) FaceData {
-	return FaceData{Id: id}
+func NewText(text string) *TextData {
+	return &TextData{Text: text}
 }
 
-func NewImage(file string) ImageData {
-	return ImageData{BasicFileData: BasicFileData{File: file}}
+func NewFace(id int64) *FaceData {
+	return &FaceData{Id: id}
 }
 
-func NewRecord(file string) RecordData {
-	return RecordData{BasicFileData: BasicFileData{File: file}}
+func NewImage(file string) *ImageData {
+	return &ImageData{BasicFileData: BasicFileData{File: file}}
 }
 
-func NewVideo(file string) VideoData {
-	return VideoData{File: file}
+func NewRecord(file string) *RecordData {
+	return &RecordData{BasicFileData: BasicFileData{File: file}}
+}
+
+func NewVideo(file string) *VideoData {
+	return &VideoData{File: file}
 }
 
 // NewAt 创建 @ 消息，qq 为被 @ 的用户 QQ 号或 all 表示 @ 所有人
-func NewAt(qq string) AtData {
-	return AtData{QQ: qq}
+func NewAt(qq string) *AtData {
+	return &AtData{QQ: qq}
 }
 
-func NewAtAll() AtData {
+func NewAtAll() *AtData {
 	return atAll
 }
 
-func NewAtUser(id qq.UserId) AtData {
+func NewAtUser(id qq.UserId) *AtData {
 	return NewAt(id.String())
 }
 
-func NewRps() RpsData {
-	return RpsData{}
+func NewRps() *RpsData {
+	return &RpsData{}
 }
 
-func NewDice() DiceData {
-	return DiceData{}
+func NewDice() *DiceData {
+	return &DiceData{}
 }
 
-func NewShake() ShakeData {
-	return ShakeData{}
+func NewShake() *ShakeData {
+	return &ShakeData{}
 }
 
 func NewRpsMessage() Message {
@@ -312,156 +423,156 @@ func NewShakeMessage() Message {
 	return Message{Type: MessageTypeShake}
 }
 
-func NewAnonymous(ignore bool) AnonymousData {
-	return AnonymousData{Ignore: ignore}
+func NewAnonymous(ignore bool) *AnonymousData {
+	return &AnonymousData{Ignore: ignore}
 }
 
-func NewShare(title, url string) ShareData {
-	return ShareData{Title: title, Url: url}
+func NewShare(title, url string) *ShareData {
+	return &ShareData{Title: title, Url: url}
 }
 
-func NewContact(t string, id int64) ContactData {
-	return ContactData{Type: t, BasicIdData: BasicIdData{Id: id}}
+func NewContact(t string, id int64) *ContactData {
+	return &ContactData{Type: t, BasicIdData: BasicIdData{Id: id}}
 }
 
-func NewLocation(lat, lon float64) LocationData {
-	return LocationData{Lat: lat, Lon: lon}
+func NewLocation(lat, lon float64) *LocationData {
+	return &LocationData{Lat: lat, Lon: lon}
 }
 
-func NewMusic(t MusicType, id int64) MusicData {
-	return MusicData{BasicMusicData: BasicMusicData{Type: t}, BasicIdData: BasicIdData{Id: id}}
+func NewMusic(t MusicType, id int64) *MusicData {
+	return &MusicData{BasicMusicData: BasicMusicData{Type: t}, BasicIdData: BasicIdData{Id: id}}
 }
 
-func NewCustomMusic(title, url, audio string) CustomMusicData {
-	return CustomMusicData{BasicMusicData: BasicMusicData{Type: MusicTypeCustom}, Title: title, Url: url, Audio: audio}
+func NewCustomMusic(title, url, audio string) *CustomMusicData {
+	return &CustomMusicData{BasicMusicData: BasicMusicData{Type: MusicTypeCustom}, Title: title, Url: url, Audio: audio}
 }
 
-func NewReply(id qq.MessageId) ReplyData {
-	return ReplyData{Id: int64(id)}
+func NewReply(id qq.MessageId) *ReplyData {
+	return &ReplyData{Id: int64(id)}
 }
 
-func NewNode(id int64) IdNodeData {
-	return IdNodeData{Id: id}
+func NewNode(id int64) *IdNodeData {
+	return &IdNodeData{Id: id}
 }
 
-func NewCustomNode[T SendableMessage](userId qq.UserId, nickname string, content T) CustomNodeData {
-	return CustomNodeData{UserId: userId, Nickname: nickname, Content: content}
+func NewCustomNode[T SendableMessage](userId qq.UserId, nickname string, content T) *CustomNodeData {
+	return &CustomNodeData{UserId: userId, Nickname: nickname, Content: content}
 }
 
-func NewXml(data string) XmlData {
-	return XmlData{Data: data}
+func NewXml(data string) *XmlData {
+	return &XmlData{Data: data}
 }
 
-func NewJson(data string) JsonData {
-	return JsonData{Data: data}
+func NewJson(data string) *JsonData {
+	return &JsonData{Data: data}
 }
 
-func (d TextData) Message() Message {
+func (d *TextData) Message() Message {
 	return Message{
 		Type: MessageTypeText,
 		Data: d,
 	}
 }
 
-func (d FaceData) Message() Message {
+func (d *FaceData) Message() Message {
 	return Message{
 		Type: MessageTypeFace,
 		Data: d,
 	}
 }
 
-func (d ImageData) Message() Message {
+func (d *ImageData) Message() Message {
 	return Message{
 		Type: MessageTypeImage,
 		Data: d,
 	}
 }
 
-func (d RecordData) Message() Message {
+func (d *RecordData) Message() Message {
 	return Message{
 		Type: MessageTypeRecord,
 		Data: d,
 	}
 }
 
-func (d VideoData) Message() Message {
+func (d *VideoData) Message() Message {
 	return Message{
 		Type: MessageTypeVideo,
 		Data: d,
 	}
 }
 
-func (d AtData) Message() Message {
+func (d *AtData) Message() Message {
 	return Message{
 		Type: MessageTypeAt,
 		Data: d,
 	}
 }
 
-func (d RpsData) Message() Message {
+func (d *RpsData) Message() Message {
 	return Message{
 		Type: MessageTypeRps,
 		Data: d,
 	}
 }
 
-func (d DiceData) Message() Message {
+func (d *DiceData) Message() Message {
 	return Message{
 		Type: MessageTypeDice,
 		Data: d,
 	}
 }
 
-func (d ShakeData) Message() Message {
+func (d *ShakeData) Message() Message {
 	return Message{
 		Type: MessageTypeShake,
 		Data: d,
 	}
 }
 
-func (d PokeData) Message() Message {
+func (d *PokeData) Message() Message {
 	return Message{
 		Type: MessageTypePoke,
 		Data: d,
 	}
 }
 
-func (d AnonymousData) Message() Message {
+func (d *AnonymousData) Message() Message {
 	return Message{
 		Type: MessageTypeAnonymous,
 		Data: d,
 	}
 }
 
-func (d ShareData) Message() Message {
+func (d *ShareData) Message() Message {
 	return Message{
 		Type: MessageTypeShare,
 		Data: d,
 	}
 }
 
-func (d ContactData) Message() Message {
+func (d *ContactData) Message() Message {
 	return Message{
 		Type: MessageTypeContact,
 		Data: d,
 	}
 }
 
-func (d LocationData) Message() Message {
+func (d *LocationData) Message() Message {
 	return Message{
 		Type: MessageTypeLocation,
 		Data: d,
 	}
 }
 
-func (d MusicData) Message() Message {
+func (d *MusicData) Message() Message {
 	return Message{
 		Type: MessageTypeMusic,
 		Data: d,
 	}
 }
 
-func (d CustomMusicData) Message() Message {
+func (d *CustomMusicData) Message() Message {
 	return Message{
 		Type: MessageTypeMusic,
 		Data: d,
@@ -475,35 +586,35 @@ func (d ReplyData) Message() Message {
 	}
 }
 
-func (d ForwardData) Message() Message {
+func (d *ForwardData) Message() Message {
 	return Message{
 		Type: MessageTypeForward,
 		Data: d,
 	}
 }
 
-func (d IdNodeData) Message() Message {
+func (d *IdNodeData) Message() Message {
 	return Message{
 		Type: MessageTypeNode,
 		Data: d,
 	}
 }
 
-func (d CustomNodeData) Message() Message {
+func (d *CustomNodeData) Message() Message {
 	return Message{
 		Type: MessageTypeNode,
 		Data: d,
 	}
 }
 
-func (d XmlData) Message() Message {
+func (d *XmlData) Message() Message {
 	return Message{
 		Type: MessageTypeXml,
 		Data: d,
 	}
 }
 
-func (d JsonData) Message() Message {
+func (d *JsonData) Message() Message {
 	return Message{
 		Type: MessageTypeJson,
 		Data: d,
