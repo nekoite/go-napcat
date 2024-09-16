@@ -89,7 +89,10 @@ func getQQMusicId(songName string) (int64, error) {
 func main() {
 	napcat.Extension.Register()
 	gonapcat.Init(config.DefaultLogConfig().WithStderr().WithLevel("debug"))
-	bot := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
+	bot, err := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
+	if err != nil {
+		panic(err)
+	}
 	bot.RegisterCommand(&MusicCommand{bot: bot})
 	bot.Start()
 	defer gonapcat.Finalize()

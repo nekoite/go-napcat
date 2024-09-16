@@ -25,7 +25,7 @@ type Client struct {
 	onRecvMsg func([]byte)
 }
 
-func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) *Client {
+func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) (*Client, error) {
 	logger = logger.Named("ws")
 	setupFunc := func() (*websocket.Conn, error) {
 		u := url.URL{Scheme: "ws", Host: fmt.Sprintf("%s:%d", cfg.Ws.Host, cfg.Ws.Port), Path: cfg.Ws.Endpoint}
@@ -40,7 +40,8 @@ func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) 
 	}
 	conn, err := setupFunc()
 	if err != nil {
-		logger.Fatal("dial:", zap.Error(err))
+		logger.Error("dial:", zap.Error(err))
+		return nil, err
 	}
 	interrupt := make(chan struct{}, 1)
 	wsConn := &Client{
@@ -54,7 +55,7 @@ func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) 
 		pingPeriod: time.Duration(cfg.Ws.PingPeriod) * time.Millisecond,
 		onRecvMsg:  onRecvMsg,
 	}
-	return wsConn
+	return wsConn, nil
 }
 
 func (c *Client) Start() {

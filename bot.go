@@ -36,7 +36,7 @@ type Bot struct {
 	logger *BotLogger
 }
 
-func NewBot(cfg *config.BotConfig) *Bot {
+func NewBot(cfg *config.BotConfig) (*Bot, error) {
 	logger := zap.L().Named(fmt.Sprint(cfg.Id))
 	bot := &Bot{
 		id:         qq.UserId(cfg.Id),
@@ -45,9 +45,13 @@ func NewBot(cfg *config.BotConfig) *Bot {
 
 		logger: &BotLogger{logger: logger},
 	}
-	bot.conn = ws.NewConn(logger, cfg, bot.onRecvWsMsg)
+	var err error
+	bot.conn, err = ws.NewConn(logger, cfg, bot.onRecvWsMsg)
+	if err != nil {
+		return nil, err
+	}
 	bot.api = api.NewSender(logger, bot.conn, cfg.ApiTimeout)
-	return bot
+	return bot, nil
 }
 
 func (b *Bot) Logger() *BotLogger {

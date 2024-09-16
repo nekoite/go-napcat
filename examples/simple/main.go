@@ -14,7 +14,10 @@ import (
 
 func main() {
 	gonapcat.Init(config.DefaultLogConfig().WithStderr().WithLevel("debug"))
-	bot := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
+	bot, err := gonapcat.NewBot(config.DefaultBotConfig(1341400490, "114514"))
+	if err != nil {
+		panic(err)
+	}
 	bot.RegisterHandlerPrivateMessage(func(e event.IEvent) {
 		bot.Logger().Info("Received private message", zap.Any("event", e.(*event.PrivateMessageEvent)))
 		msgId, err := e.(*event.PrivateMessageEvent).Reply(message.NewText("你好").Message().AsChain(), true)
