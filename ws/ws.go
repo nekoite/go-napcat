@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,6 +18,7 @@ type Client struct {
 	conn      *websocket.Conn
 	interrupt chan struct{}
 	send      chan []byte
+	stopped   atomic.Bool
 
 	writeWait  time.Duration
 	pongWait   time.Duration
@@ -50,6 +52,7 @@ func NewConn(logger *zap.Logger, cfg *config.BotConfig, onRecvMsg func([]byte)) 
 		conn:       conn,
 		interrupt:  interrupt,
 		send:       make(chan []byte, 256),
+		stopped:    atomic.Bool{},
 		writeWait:  time.Duration(cfg.Ws.Timeout) * time.Millisecond,
 		pongWait:   time.Duration(cfg.Ws.PongTimeout) * time.Millisecond,
 		pingPeriod: time.Duration(cfg.Ws.PingPeriod) * time.Millisecond,
@@ -63,7 +66,11 @@ func (c *Client) Start() {
 }
 
 func (c *Client) retry() error {
+	if c.stopped.Load() {
+		return nil
+	}
 	var err error
+	c.logger.Warn("connection closed unexpectedly, reconnecting...")
 	c.conn, err = c.setupFunc()
 	if err != nil {
 		c.logger.Error("failed to reconnect", zap.Error(err))
@@ -79,17 +86,18 @@ func (c *Client) setupConn() {
 }
 
 func (c *Client) readPump() {
+	conn := c.conn
 	defer func() {
-		c.conn.Close()
+		conn.Close()
 	}()
-	c.conn.SetReadDeadline(time.Now().Add(c.pongWait))
-	c.conn.SetPongHandler(func(string) error {
+	conn.SetReadDeadline(time.Now().Add(c.pongWait))
+	conn.SetPongHandler(func(string) error {
 		c.logger.Debug("received pong")
-		c.conn.SetReadDeadline(time.Now().Add(c.pongWait))
+		conn.SetReadDeadline(time.Now().Add(c.pongWait))
 		return nil
 	})
 	for {
-		_, message, err := c.conn.ReadMessage()
+		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				c.logger.Error("wsrecv", zap.Error(err))
@@ -101,7 +109,6 @@ func (c *Client) readPump() {
 			go c.onRecvMsg(message)
 		}
 	}
-	c.logger.Warn("connection closed unexpectedly, reconnecting...")
 	err := c.retry()
 	if err != nil {
 		return
@@ -110,9 +117,10 @@ func (c *Client) readPump() {
 
 func (c *Client) writePump() {
 	ticker := time.NewTicker(c.pingPeriod)
+	conn := c.conn
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		conn.Close()
 	}()
 	for {
 		select {
@@ -124,6 +132,7 @@ func (c *Client) writePump() {
 			c.logger.Debug("sent ping")
 		case <-c.interrupt:
 			c.logger.Info("ws connection close")
+			c.stopped.Store(true)
 			err := c.writeMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				c.logger.Error("close", zap.Error(err))
