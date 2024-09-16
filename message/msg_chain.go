@@ -11,65 +11,66 @@ type SendableMessage interface {
 }
 
 type Chain struct {
-	Messages []Message
+	Messages []Segment
 }
 
-func NewChain(msg ...Message) *Chain {
+func NewChain(msg ...Segment) *Chain {
 	return &Chain{Messages: msg}
 }
 
-func (mc *Chain) PrependMessage(msg Message) {
-	mc.Messages = append([]Message{msg}, mc.Messages...)
+func (mc *Chain) PrependSegment(msg Segment) {
+	mc.Messages = append([]Segment{msg}, mc.Messages...)
 }
 
 func (mc *Chain) PrependChain(chain Chain) {
 	mc.Messages = append(chain.Messages, mc.Messages...)
 }
 
-func (mc *Chain) AddMessage(msg Message) {
+func (mc *Chain) AddSegment(msg Segment) {
 	mc.Messages = append(mc.Messages, msg)
 }
 
-func (mc *Chain) AddMessages(msg ...Message) {
+func (mc *Chain) AddSegments(msg ...Segment) {
 	mc.Messages = append(mc.Messages, msg...)
 }
 
 func (mc *Chain) AddText(text string) {
-	mc.AddMessages(NewText(text).Message())
+	mc.AddSegments(NewText(text).Segment())
 }
 
 func (mc *Chain) AddAt(userId string) {
-	mc.AddMessages(NewAt(userId).Message())
+	mc.AddSegments(NewAt(userId).Segment())
 }
 
 func (mc *Chain) AddAtUser(userId qq.UserId) {
-	mc.AddMessages(NewAt(userId.String()).Message())
+	mc.AddSegments(NewAt(userId.String()).Segment())
 }
 
 func (mc *Chain) AddAtAll() {
-	mc.AddMessages(NewAtAll().Message())
+	mc.AddSegments(NewAtAll().Segment())
 }
 
 func (mc *Chain) AppendChain(chain Chain) {
-	mc.AddMessages(chain.Messages...)
+	mc.AddSegments(chain.Messages...)
 }
 
 // SetSendAsAnonymous 设置是否匿名发送消息。当 ignore 为 true 时，将在无法匿名发送消息时继续发送消息。
 func (mc *Chain) SetSendAsAnonymous(ignore bool) {
-	mc.PrependMessage(NewAnonymous(ignore).Message())
+	mc.PrependSegment(NewAnonymous(ignore).Segment())
 }
 
+// SetReplyTo 设置回复的消息 ID。
 func (mc *Chain) SetReplyTo(msgId qq.MessageId) {
-	mc.PrependMessage(NewReply(msgId).Message())
+	mc.PrependSegment(NewReply(msgId).Segment())
 }
 
 // At 返回位置在 idx 的消息的拷贝。
-func (mc *Chain) At(idx int) Message {
+func (mc *Chain) At(idx int) Segment {
 	return mc.Messages[idx]
 }
 
 // AtRef 返回位置在 idx 的消息的引用。
-func (mc *Chain) AtRef(idx int) *Message {
+func (mc *Chain) AtRef(idx int) *Segment {
 	return &mc.Messages[idx]
 }
 
@@ -78,17 +79,17 @@ func (mc *Chain) Len() int {
 }
 
 // FirstOfType 返回第一个类型为 msgType 的消息的拷贝。如果没有找到，返回空消息。
-func (mc *Chain) FirstOfType(msgType MessageType) Message {
+func (mc *Chain) FirstOfType(msgType SegmentType) Segment {
 	for _, msg := range mc.Messages {
 		if msg.Type == msgType {
 			return msg
 		}
 	}
-	return Message{}
+	return Segment{}
 }
 
 // FirstOfTypeRef 返回第一个类型为 msgType 的消息的引用。如果没有找到，返回 nil。
-func (mc *Chain) FirstOfTypeRef(msgType MessageType) *Message {
+func (mc *Chain) FirstOfTypeRef(msgType SegmentType) *Segment {
 	for i := 0; i < len(mc.Messages); i++ {
 		if mc.Messages[i].Type == msgType {
 			return &mc.Messages[i]
@@ -98,7 +99,7 @@ func (mc *Chain) FirstOfTypeRef(msgType MessageType) *Message {
 }
 
 func (mc *Chain) FirstText() *TextData {
-	m := mc.FirstOfTypeRef(MessageTypeText)
+	m := mc.FirstOfTypeRef(SegmentTypeText)
 	if m == nil {
 		return nil
 	}
@@ -106,7 +107,7 @@ func (mc *Chain) FirstText() *TextData {
 }
 
 func (mc *Chain) FirstImage() *ImageData {
-	m := mc.FirstOfTypeRef(MessageTypeImage)
+	m := mc.FirstOfTypeRef(SegmentTypeImage)
 	if m == nil {
 		return nil
 	}
@@ -114,11 +115,11 @@ func (mc *Chain) FirstImage() *ImageData {
 }
 
 func (mc *Chain) Clear() {
-	clear(mc.Messages)
+	mc.Messages = nil
 }
 
-func (mc *Chain) GetMessagesWithType(msgType MessageType) []Message {
-	return utils.Filter(mc.Messages, func(msg Message) bool {
+func (mc *Chain) GetSegmentsWithType(msgType SegmentType) []Segment {
+	return utils.Filter(mc.Messages, func(msg Segment) bool {
 		return msg.Type == msgType
 	})
 }
@@ -128,9 +129,9 @@ func (mc *Chain) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	mc.Messages = make([]Message, len(raw))
+	mc.Messages = make([]Segment, len(raw))
 	for i, r := range raw {
-		var msg Message
+		var msg Segment
 		if err := json.Unmarshal(r, &msg); err != nil {
 			return err
 		}

@@ -20,7 +20,7 @@ func main() {
 	}
 	bot.RegisterHandlerPrivateMessage(func(e event.IEvent) {
 		bot.Logger().Info("Received private message", zap.Any("event", e.(*event.PrivateMessageEvent)))
-		msgId, err := e.(*event.PrivateMessageEvent).Reply(message.NewText("你好").Message().AsChain(), true)
+		msgId, err := e.(*event.PrivateMessageEvent).Reply(message.NewText("你好").Segment().AsChain(), true)
 		if err != nil {
 			bot.Logger().Error("Failed to send private message", zap.Error(err))
 			return

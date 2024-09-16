@@ -29,13 +29,13 @@ type CQStringer fmt.Stringer
 // CQMessage QQ 消息
 type CQMessage interface {
 	// GetType 获取消息类型
-	GetType() MessageType
+	GetType() SegmentType
 	// String CQ 码的消息字符串
 	CQStringer
 }
 
-func (m Message) String() string {
-	if m.Type == MessageTypeText {
+func (m Segment) String() string {
+	if m.Type == SegmentTypeText {
 		return EscapeCQString(m.GetTextData().Text)
 	}
 	sb := strings.Builder{}
@@ -46,11 +46,11 @@ func (m Message) String() string {
 	return sb.String()
 }
 
-func (m Message) GetType() MessageType {
+func (m Segment) GetType() SegmentType {
 	return m.Type
 }
 
-func (m Message) buildDataSegmentString(sb *strings.Builder) {
+func (m Segment) buildDataSegmentString(sb *strings.Builder) {
 	switch m.Data.(type) {
 	case UnknownData:
 		for k, v := range m.Data.(UnknownData) {
@@ -96,7 +96,7 @@ func ParseCQString(s string) (*Chain, error) {
 		}
 		start += idx
 		if start-idx > 0 {
-			chain.Messages = append(chain.Messages, NewText(UnescapeCQString(s[idx:start])).Message())
+			chain.Messages = append(chain.Messages, NewText(UnescapeCQString(s[idx:start])).Segment())
 		}
 		end := strings.Index(s[start:], "]")
 		if end == -1 {
@@ -111,78 +111,78 @@ func ParseCQString(s string) (*Chain, error) {
 		idx = end + 1
 	}
 	if idx < len(s) {
-		chain.Messages = append(chain.Messages, NewText(UnescapeCQString(s[idx:])).Message())
+		chain.Messages = append(chain.Messages, NewText(UnescapeCQString(s[idx:])).Segment())
 	}
 	return chain, nil
 }
 
-func parseSingleCQComponent(s string) (Message, error) {
+func parseSingleCQComponent(s string) (Segment, error) {
 	if !strings.HasPrefix(s, "[CQ:") || !strings.HasSuffix(s, "]") {
-		return Message{}, errors.ErrInvalidCQString
+		return Segment{}, errors.ErrInvalidCQString
 	}
 	s = s[4 : len(s)-1]
 	parts := strings.Split(s, ",")
 	if len(parts) == 0 {
-		return Message{}, errors.ErrInvalidCQString
+		return Segment{}, errors.ErrInvalidCQString
 	}
-	ty := MessageType(parts[0])
+	ty := SegmentType(parts[0])
 	parts = parts[1:]
 	partsMap := make(map[string]string)
 	for _, part := range parts {
 		kv := strings.SplitN(part, "=", 2)
 		if len(kv) != 2 {
-			return Message{}, errors.ErrInvalidCQString
+			return Segment{}, errors.ErrInvalidCQString
 		}
 		partsMap[kv[0]] = kv[1]
 	}
 	return parseMessagePart(ty, partsMap)
 }
 
-func parseMessagePart(ty MessageType, parts map[string]string) (Message, error) {
-	m := Message{Type: ty}
+func parseMessagePart(ty SegmentType, parts map[string]string) (Segment, error) {
+	m := Segment{Type: ty}
 	if len(parts) == 0 {
 		return m, nil
 	}
 	switch ty {
-	case MessageTypeText:
+	case SegmentTypeText:
 		m.Data = new(TextData)
-	case MessageTypeFace:
+	case SegmentTypeFace:
 		m.Data = new(FaceData)
-	case MessageTypeImage:
+	case SegmentTypeImage:
 		m.Data = new(ImageData)
-	case MessageTypeRecord:
+	case SegmentTypeRecord:
 		m.Data = new(RecordData)
-	case MessageTypeVideo:
+	case SegmentTypeVideo:
 		m.Data = new(VideoData)
-	case MessageTypeAt:
+	case SegmentTypeAt:
 		m.Data = new(AtData)
-	case MessageTypeRps:
+	case SegmentTypeRps:
 		m.Data = new(RpsData)
-	case MessageTypeDice:
+	case SegmentTypeDice:
 		m.Data = new(DiceData)
-	case MessageTypeShake:
+	case SegmentTypeShake:
 		m.Data = new(ShakeData)
-	case MessageTypePoke:
+	case SegmentTypePoke:
 		m.Data = new(PokeData)
-	case MessageTypeAnonymous:
+	case SegmentTypeAnonymous:
 		m.Data = new(AnonymousData)
-	case MessageTypeShare:
+	case SegmentTypeShare:
 		m.Data = new(ShareData)
-	case MessageTypeContact:
+	case SegmentTypeContact:
 		m.Data = new(ContactData)
-	case MessageTypeLocation:
+	case SegmentTypeLocation:
 		m.Data = new(LocationData)
-	case MessageTypeMusic:
+	case SegmentTypeMusic:
 		if parts["type"] == "custom" {
 			m.Data = new(CustomMusicData)
 		} else {
 			m.Data = new(MusicData)
 		}
-	case MessageTypeReply:
+	case SegmentTypeReply:
 		m.Data = new(ReplyData)
-	case MessageTypeForward:
+	case SegmentTypeForward:
 		m.Data = new(ForwardData)
-	case MessageTypeNode:
+	case SegmentTypeNode:
 		if parts["id"] != "" {
 			m.Data = new(IdNodeData)
 		} else {
@@ -190,9 +190,9 @@ func parseMessagePart(ty MessageType, parts map[string]string) (Message, error) 
 			d.Content = NewChain()
 			m.Data = d
 		}
-	case MessageTypeXml:
+	case SegmentTypeXml:
 		m.Data = XmlData{}
-	case MessageTypeJson:
+	case SegmentTypeJson:
 		m.Data = JsonData{}
 	default:
 		m.Data = parts

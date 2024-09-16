@@ -317,7 +317,7 @@ func (e *GroupMessageEvent) ReplyAt(msg *message.Chain, quote bool, at bool) (qq
 		msg.SetReplyTo(e.MessageId)
 	}
 	if at {
-		msg.PrependMessage(message.NewAtUser(e.Sender.UserId).Message())
+		msg.PrependSegment(message.NewAtUser(e.Sender.UserId).Segment())
 	}
 	resp, err := e.apiSender.SendGroupMsg(e.GroupId, msg)
 	if err != nil {

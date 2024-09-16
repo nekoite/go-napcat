@@ -9,50 +9,48 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// MessageType 消息类型
-type MessageType string
+// SegmentType 消息片段类型
+type SegmentType string
 
 type MusicType string
 
 const (
-	MessageTypeText   MessageType = "text"
-	MessageTypeFace   MessageType = "face"
-	MessageTypeImage  MessageType = "image"
-	MessageTypeRecord MessageType = "record"
-	// MessageTypeVideo 短视频
-	MessageTypeVideo MessageType = "video"
-	// MessageTypeAt @某人
-	MessageTypeAt MessageType = "at"
-	// MessageTypeRps 猜拳魔法表情
-	MessageTypeRps MessageType = "rps"
-	// MessageTypeDice 掷骰子魔法表情
-	MessageTypeDice MessageType = "dice"
-	// MessageTypeShake 窗口抖动
-	MessageTypeShake     MessageType = "shake"
-	MessageTypePoke      MessageType = "poke"
-	MessageTypeAnonymous MessageType = "anonymous"
-	MessageTypeShare     MessageType = "share"
-	MessageTypeContact   MessageType = "contact"
-	MessageTypeLocation  MessageType = "location"
-	MessageTypeMusic     MessageType = "music"
-	MessageTypeReply     MessageType = "reply"
-	MessageTypeForward   MessageType = "forward"
-	MessageTypeNode      MessageType = "node"
-	MessageTypeXml       MessageType = "xml"
-	MessageTypeJson      MessageType = "json"
+	SegmentTypeText      SegmentType = "text"
+	SegmentTypeFace      SegmentType = "face"
+	SegmentTypeImage     SegmentType = "image"
+	SegmentTypeRecord    SegmentType = "record"
+	SegmentTypeVideo     SegmentType = "video" // MessageTypeVideo 短视频
+	SegmentTypeAt        SegmentType = "at"    // MessageTypeAt @某人
+	SegmentTypeRps       SegmentType = "rps"   // MessageTypeRps 猜拳魔法表情
+	SegmentTypeDice      SegmentType = "dice"  // MessageTypeDice 掷骰子魔法表情
+	SegmentTypeShake     SegmentType = "shake" // MessageTypeShake 窗口抖动
+	SegmentTypePoke      SegmentType = "poke"
+	SegmentTypeAnonymous SegmentType = "anonymous"
+	SegmentTypeShare     SegmentType = "share"
+	SegmentTypeContact   SegmentType = "contact"
+	SegmentTypeLocation  SegmentType = "location"
+	SegmentTypeMusic     SegmentType = "music"
+	SegmentTypeReply     SegmentType = "reply"
+	SegmentTypeForward   SegmentType = "forward"
+	SegmentTypeNode      SegmentType = "node"
+	SegmentTypeXml       SegmentType = "xml"
+	SegmentTypeJson      SegmentType = "json"
 
 	MusicTypeQQ     MusicType = "qq"
 	MusicType163    MusicType = "163"
 	MusicTypeXm     MusicType = "xm"
 	MusicTypeCustom MusicType = "custom"
+
+	ImageTypeFlash = "flash"
 )
 
 var (
 	atAll = NewAt("all")
 )
 
-type Message struct {
-	Type MessageType `json:"type"`
+// Segment 消息片段
+type Segment struct {
+	Type SegmentType `json:"type"`
 	Data any         `json:"data"`
 }
 
@@ -171,147 +169,147 @@ type JsonData struct {
 
 type UnknownData map[string]any
 
-func (m Message) AsChain() *Chain {
+func (m Segment) AsChain() *Chain {
 	return NewChain(m)
 }
 
-// GetTextData 获取文本消息数据，如果类型不匹配将引发 panic
-func (m Message) GetTextData() *TextData {
+// GetTextData 获取文本消息数据，如果类型不匹配返回 nil
+func (m Segment) GetTextData() *TextData {
 	return GetMsgData[TextData](&m)
 }
 
-// GetImageData 获取图片消息数据，如果类型不匹配将引发 panic
-func (m Message) GetImageData() *ImageData {
+// GetImageData 获取图片消息数据，如果类型不匹配返回 nil
+func (m Segment) GetImageData() *ImageData {
 	return GetMsgData[ImageData](&m)
 }
 
-// GetFaceData 获取表情消息数据，如果类型不匹配将引发 panic
-func (m Message) GetFaceData() *FaceData {
+// GetFaceData 获取表情消息数据，如果类型不匹配返回 nil
+func (m Segment) GetFaceData() *FaceData {
 	return GetMsgData[FaceData](&m)
 }
 
-// GetRecordData 获取语音消息数据，如果类型不匹配将引发 panic
-func (m Message) GetRecordData() *RecordData {
+// GetRecordData 获取语音消息数据，如果类型不匹配返回 nil
+func (m Segment) GetRecordData() *RecordData {
 	return GetMsgData[RecordData](&m)
 }
 
-// GetVideoData 获取视频消息数据，如果类型不匹配将引发 panic
-func (m Message) GetVideoData() *VideoData {
+// GetVideoData 获取视频消息数据，如果类型不匹配返回 nil
+func (m Segment) GetVideoData() *VideoData {
 	return GetMsgData[VideoData](&m)
 }
 
-// GetAtData 获取 @ 消息数据，如果类型不匹配将引发 panic
-func (m Message) GetAtData() *AtData {
+// GetAtData 获取 @ 消息数据，如果类型不匹配返回 nil
+func (m Segment) GetAtData() *AtData {
 	return GetMsgData[AtData](&m)
 }
 
-// GetRpsData 获取猜拳消息数据，如果类型不匹配将引发 panic
-func (m Message) GetRpsData() *RpsData {
+// GetRpsData 获取猜拳消息数据，如果类型不匹配返回 nil
+func (m Segment) GetRpsData() *RpsData {
 	return GetMsgData[RpsData](&m)
 }
 
-// GetDiceData 获取掷骰子消息数据，如果类型不匹配将引发 panic
-func (m Message) GetDiceData() *DiceData {
+// GetDiceData 获取掷骰子消息数据，如果类型不匹配返回 nil
+func (m Segment) GetDiceData() *DiceData {
 	return GetMsgData[DiceData](&m)
 }
 
-// GetShakeData 获取窗口抖动消息数据，如果类型不匹配将引发 panic
-func (m Message) GetShakeData() *ShakeData {
+// GetShakeData 获取窗口抖动消息数据，如果类型不匹配返回 nil
+func (m Segment) GetShakeData() *ShakeData {
 	return GetMsgData[ShakeData](&m)
 }
 
-// GetPokeData 获取戳一戳消息数据，如果类型不匹配将引发 panic
-func (m Message) GetPokeData() *PokeData {
+// GetPokeData 获取戳一戳消息数据，如果类型不匹配返回 nil
+func (m Segment) GetPokeData() *PokeData {
 	return GetMsgData[PokeData](&m)
 }
 
-// GetShareData 获取分享消息数据，如果类型不匹配将引发 panic
-func (m Message) GetShareData() *ShareData {
+// GetShareData 获取分享消息数据，如果类型不匹配返回 nil
+func (m Segment) GetShareData() *ShareData {
 	return GetMsgData[ShareData](&m)
 }
 
-// GetContactData 获取联系人消息数据，如果类型不匹配将引发 panic
-func (m Message) GetContactData() *ContactData {
+// GetContactData 获取联系人消息数据，如果类型不匹配返回 nil
+func (m Segment) GetContactData() *ContactData {
 	return GetMsgData[ContactData](&m)
 }
 
-// GetLocationData 获取位置消息数据，如果类型不匹配将引发 panic
-func (m Message) GetLocationData() *LocationData {
+// GetLocationData 获取位置消息数据，如果类型不匹配返回 nil
+func (m Segment) GetLocationData() *LocationData {
 	return GetMsgData[LocationData](&m)
 }
 
-// GetMusicData 获取音乐消息数据，如果类型不匹配将引发 panic
-func (m Message) GetMusicData() *MusicData {
+// GetMusicData 获取音乐消息数据，如果类型不匹配返回 nil
+func (m Segment) GetMusicData() *MusicData {
 	return GetMsgData[MusicData](&m)
 }
 
-// GetReplyData 获取回复消息数据，如果类型不匹配将引发 panic
-func (m Message) GetReplyData() *ReplyData {
+// GetReplyData 获取回复消息数据，如果类型不匹配返回 nil
+func (m Segment) GetReplyData() *ReplyData {
 	return GetMsgData[ReplyData](&m)
 }
 
-// GetForwardData 获取转发消息数据，如果类型不匹配将引发 panic
-func (m Message) GetForwardData() *ForwardData {
+// GetForwardData 获取转发消息数据，如果类型不匹配返回 nil
+func (m Segment) GetForwardData() *ForwardData {
 	return GetMsgData[ForwardData](&m)
 }
 
-// GetCustomNodeData 获取自定义节点消息数据，如果类型不匹配将引发 panic
-func (m Message) GetCustomNodeData() any {
+// GetCustomNodeData 获取自定义节点消息数据，如果类型不匹配返回 nil
+func (m Segment) GetCustomNodeData() any {
 	return GetMsgData[CustomNodeData](&m)
 }
 
-// GetXmlData 获取 XML 消息数据，如果类型不匹配将引发 panic
-func (m Message) GetXmlData() *XmlData {
+// GetXmlData 获取 XML 消息数据，如果类型不匹配返回 nil
+func (m Segment) GetXmlData() *XmlData {
 	return GetMsgData[XmlData](&m)
 }
 
-// GetJsonData 获取 JSON 消息数据，如果类型不匹配将引发 panic
-func (m Message) GetJsonData() *JsonData {
+// GetJsonData 获取 JSON 消息数据，如果类型不匹配返回 nil
+func (m Segment) GetJsonData() *JsonData {
 	return GetMsgData[JsonData](&m)
 }
 
-func (m Message) IsInvalid() bool {
+func (m Segment) IsInvalid() bool {
 	return m.Type == ""
 }
 
-func (m Message) GetDataPtr() any {
+func (m Segment) GetDataPtr() any {
 	return reflect.ValueOf(m.Data).Addr().Interface()
 }
 
-func (m *Message) UnmarshalJSON(data []byte) error {
+func (m *Segment) UnmarshalJSON(data []byte) error {
 	var d any
 	fields := gjson.ParseBytes(data)
-	m.Type = MessageType(fields.Get("type").String())
+	m.Type = SegmentType(fields.Get("type").String())
 	switch m.Type {
-	case MessageTypeText:
+	case SegmentTypeText:
 		d = new(TextData)
-	case MessageTypeFace:
+	case SegmentTypeFace:
 		d = new(FaceData)
-	case MessageTypeImage:
+	case SegmentTypeImage:
 		d = new(ImageData)
-	case MessageTypeRecord:
+	case SegmentTypeRecord:
 		d = new(RecordData)
-	case MessageTypeVideo:
+	case SegmentTypeVideo:
 		d = new(VideoData)
-	case MessageTypeAt:
+	case SegmentTypeAt:
 		d = new(AtData)
-	case MessageTypeRps:
+	case SegmentTypeRps:
 		d = new(RpsData)
-	case MessageTypeDice:
+	case SegmentTypeDice:
 		d = new(DiceData)
-	case MessageTypeShake:
+	case SegmentTypeShake:
 		d = new(ShakeData)
-	case MessageTypePoke:
+	case SegmentTypePoke:
 		d = new(PokeData)
-	case MessageTypeAnonymous:
+	case SegmentTypeAnonymous:
 		d = new(AnonymousData)
-	case MessageTypeShare:
+	case SegmentTypeShare:
 		d = new(ShareData)
-	case MessageTypeContact:
+	case SegmentTypeContact:
 		d = new(ContactData)
-	case MessageTypeLocation:
+	case SegmentTypeLocation:
 		d = new(LocationData)
-	case MessageTypeMusic:
+	case SegmentTypeMusic:
 		musicType := MusicType(fields.Get("data").Get("type").String())
 		switch musicType {
 		case MusicTypeCustom:
@@ -319,11 +317,11 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 		default:
 			d = new(MusicData)
 		}
-	case MessageTypeReply:
+	case SegmentTypeReply:
 		d = new(ReplyData)
-	case MessageTypeForward:
+	case SegmentTypeForward:
 		d = new(ForwardData)
-	case MessageTypeNode:
+	case SegmentTypeNode:
 		hasId := fields.Get("data").Get("id").Exists()
 		if hasId {
 			d = new(IdNodeData)
@@ -333,9 +331,9 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 			nd.Content = NewChain()
 			d = nd
 		}
-	case MessageTypeXml:
+	case SegmentTypeXml:
 		d = new(XmlData)
-	case MessageTypeJson:
+	case SegmentTypeJson:
 		d = new(JsonData)
 	default:
 		d = make(UnknownData)
@@ -353,12 +351,12 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 }
 
 // GetMsgDataUnsafe 获取类型为 T 的消息数据，如果类型不匹配会引发 panic
-func GetMsgDataUnsafe[T any](msg *Message) *T {
+func GetMsgDataUnsafe[T any](msg *Segment) *T {
 	return msg.Data.(*T)
 }
 
 // GetMsgData 安全获取类型为 T 的消息数据，返回 nil 表示类型不匹配
-func GetMsgData[T any](msg *Message) *T {
+func GetMsgData[T any](msg *Segment) *T {
 	data, ok := msg.Data.(*T)
 	if !ok {
 		return nil
@@ -370,20 +368,40 @@ func NewText(text string) *TextData {
 	return &TextData{Text: text}
 }
 
+func NewTextSegment(text string) Segment {
+	return NewText(text).Segment()
+}
+
 func NewFace(id int64) *FaceData {
 	return &FaceData{Id: id}
+}
+
+func NewFaceSegment(id int64) Segment {
+	return NewFace(id).Segment()
 }
 
 func NewImage(file string) *ImageData {
 	return &ImageData{BasicFileData: BasicFileData{File: file}}
 }
 
+func NewImageSegment(file string) Segment {
+	return NewImage(file).Segment()
+}
+
 func NewRecord(file string) *RecordData {
 	return &RecordData{BasicFileData: BasicFileData{File: file}}
 }
 
+func NewRecordSegment(file string) Segment {
+	return NewRecord(file).Segment()
+}
+
 func NewVideo(file string) *VideoData {
 	return &VideoData{File: file}
+}
+
+func NewVideoSegment(file string) Segment {
+	return NewVideo(file).Segment()
 }
 
 // NewAt 创建 @ 消息，qq 为被 @ 的用户 QQ 号或 all 表示 @ 所有人
@@ -391,6 +409,11 @@ func NewAt(qq string) *AtData {
 	return &AtData{QQ: qq}
 }
 
+func NewAtMessage(qq string) Segment {
+	return NewAt(qq).Segment()
+}
+
+// NewAtAll 创建 @ 所有人 消息
 func NewAtAll() *AtData {
 	return atAll
 }
@@ -411,16 +434,16 @@ func NewShake() *ShakeData {
 	return &ShakeData{}
 }
 
-func NewRpsMessage() Message {
-	return Message{Type: MessageTypeRps}
+func NewRpsMessage() Segment {
+	return Segment{Type: SegmentTypeRps}
 }
 
-func NewDiceMessage() Message {
-	return Message{Type: MessageTypeDice}
+func NewDiceMessage() Segment {
+	return Segment{Type: SegmentTypeDice}
 }
 
-func NewShakeMessage() Message {
-	return Message{Type: MessageTypeShake}
+func NewShakeMessage() Segment {
+	return Segment{Type: SegmentTypeShake}
 }
 
 func NewAnonymous(ignore bool) *AnonymousData {
@@ -467,156 +490,164 @@ func NewJson(data string) *JsonData {
 	return &JsonData{Data: data}
 }
 
-func (d *TextData) Message() Message {
-	return Message{
-		Type: MessageTypeText,
+func (d *TextData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeText,
 		Data: d,
 	}
 }
 
-func (d *FaceData) Message() Message {
-	return Message{
-		Type: MessageTypeFace,
+func (d *FaceData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeFace,
 		Data: d,
 	}
 }
 
-func (d *ImageData) Message() Message {
-	return Message{
-		Type: MessageTypeImage,
+func (d *ImageData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeImage,
 		Data: d,
 	}
 }
 
-func (d *RecordData) Message() Message {
-	return Message{
-		Type: MessageTypeRecord,
+func (d *ImageData) SetFlash() {
+	d.Type = ImageTypeFlash
+}
+
+func (d *ImageData) IsFlash() bool {
+	return d.Type == ImageTypeFlash
+}
+
+func (d *RecordData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeRecord,
 		Data: d,
 	}
 }
 
-func (d *VideoData) Message() Message {
-	return Message{
-		Type: MessageTypeVideo,
+func (d *VideoData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeVideo,
 		Data: d,
 	}
 }
 
-func (d *AtData) Message() Message {
-	return Message{
-		Type: MessageTypeAt,
+func (d *AtData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeAt,
 		Data: d,
 	}
 }
 
-func (d *RpsData) Message() Message {
-	return Message{
-		Type: MessageTypeRps,
+func (d *RpsData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeRps,
 		Data: d,
 	}
 }
 
-func (d *DiceData) Message() Message {
-	return Message{
-		Type: MessageTypeDice,
+func (d *DiceData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeDice,
 		Data: d,
 	}
 }
 
-func (d *ShakeData) Message() Message {
-	return Message{
-		Type: MessageTypeShake,
+func (d *ShakeData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeShake,
 		Data: d,
 	}
 }
 
-func (d *PokeData) Message() Message {
-	return Message{
-		Type: MessageTypePoke,
+func (d *PokeData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypePoke,
 		Data: d,
 	}
 }
 
-func (d *AnonymousData) Message() Message {
-	return Message{
-		Type: MessageTypeAnonymous,
+func (d *AnonymousData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeAnonymous,
 		Data: d,
 	}
 }
 
-func (d *ShareData) Message() Message {
-	return Message{
-		Type: MessageTypeShare,
+func (d *ShareData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeShare,
 		Data: d,
 	}
 }
 
-func (d *ContactData) Message() Message {
-	return Message{
-		Type: MessageTypeContact,
+func (d *ContactData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeContact,
 		Data: d,
 	}
 }
 
-func (d *LocationData) Message() Message {
-	return Message{
-		Type: MessageTypeLocation,
+func (d *LocationData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeLocation,
 		Data: d,
 	}
 }
 
-func (d *MusicData) Message() Message {
-	return Message{
-		Type: MessageTypeMusic,
+func (d *MusicData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeMusic,
 		Data: d,
 	}
 }
 
-func (d *CustomMusicData) Message() Message {
-	return Message{
-		Type: MessageTypeMusic,
+func (d *CustomMusicData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeMusic,
 		Data: d,
 	}
 }
 
-func (d ReplyData) Message() Message {
-	return Message{
-		Type: MessageTypeReply,
+func (d *ReplyData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeReply,
 		Data: d,
 	}
 }
 
-func (d *ForwardData) Message() Message {
-	return Message{
-		Type: MessageTypeForward,
+func (d *ForwardData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeForward,
 		Data: d,
 	}
 }
 
-func (d *IdNodeData) Message() Message {
-	return Message{
-		Type: MessageTypeNode,
+func (d *IdNodeData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeNode,
 		Data: d,
 	}
 }
 
-func (d *CustomNodeData) Message() Message {
-	return Message{
-		Type: MessageTypeNode,
+func (d *CustomNodeData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeNode,
 		Data: d,
 	}
 }
 
-func (d *XmlData) Message() Message {
-	return Message{
-		Type: MessageTypeXml,
+func (d *XmlData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeXml,
 		Data: d,
 	}
 }
 
-func (d *JsonData) Message() Message {
-	return Message{
-		Type: MessageTypeJson,
+func (d *JsonData) Segment() Segment {
+	return Segment{
+		Type: SegmentTypeJson,
 		Data: d,
 	}
 }

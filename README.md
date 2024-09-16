@@ -30,6 +30,18 @@ go get -u github.com/nekoite/go-napcat
 
 <https://github.com/nekoite/go-napcat/tree/master/examples>
 
+## 消息链与消息片段
+
+本框架只支持传入原始消息为 JSON 数组。它将会变成消息事件及其它带有消息的结构体中的消息字段，类型为 `message.Chain`（消息链）。其中包含多个 `message.Segment`（消息片段）。每个消息片段包含消息类型 `Type message.SegmentType` 以及消息内容 `Data any`。消息内容的类型根据消息类型不同，为 `message.*Data` 的指针的一种（例如 `Type` 为 `SegmentTypeText` 时，`Data` 的类型是 `*message.TextData`）。
+
+使用 `New*()` 构建新的消息内容，或使用 `New*Segment()` 构建消息片段。也可以使用 `New*().Segment()` 构建消息片段。
+
+使用 `Segment::AsChain()` 构建仅包含当前消息片段的消息链。使用 `Segment::Get*Data()` 获取对应类型的消息内容。如果消息类型不匹配，则返回 `nil`。
+
+使用 `message.NewChain()` 构造空消息链。使用 `Chain::PrependSegment(Segment)`，`Chain::AddSegment(Segment)`，`Chain::AddSegments(...Segment)`，以及 `Chain::Add*()` 来操作消息链。
+
+具体内容请看[文档](https://pkg.go.dev/github.com/nekoite/go-napcat/message#pkg-index)。
+
 ## 事件与指令
 
 ### 事件处理顺序

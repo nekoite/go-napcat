@@ -49,9 +49,9 @@ func (c *MusicCommand) OnCommand(parseResult *event.ParseResult) {
 	args := parseResult.ParsedArgs.(*MusicCommandArgs)
 	if parseResult.Error != nil {
 		if parseResult.StdOut != "" {
-			parseResult.Event.Reply(message.NewText(parseResult.StdOut).Message().AsChain(), true)
+			parseResult.Event.Reply(message.NewText(parseResult.StdOut).Segment().AsChain(), true)
 		} else {
-			parseResult.Event.Reply(message.NewText(parseResult.Error.Error()).Message().AsChain(), true)
+			parseResult.Event.Reply(message.NewText(parseResult.Error.Error()).Segment().AsChain(), true)
 		}
 		return
 	}
@@ -59,13 +59,13 @@ func (c *MusicCommand) OnCommand(parseResult *event.ParseResult) {
 	case "qq":
 		id, err := getQQMusicId(args.SongName)
 		if err != nil {
-			parseResult.Event.Reply(message.NewText(err.Error()).Message().AsChain(), true)
+			parseResult.Event.Reply(message.NewText(err.Error()).Segment().AsChain(), true)
 			return
 		}
 		napcat.SetMsgEmojiLike(c.bot, parseResult.Event.GetMessageId(), 128166)
-		parseResult.Event.Reply(message.NewMusic(message.MusicTypeQQ, id).Message().AsChain(), false)
+		parseResult.Event.Reply(message.NewMusic(message.MusicTypeQQ, id).Segment().AsChain(), false)
 	default:
-		parseResult.Event.Reply(message.NewText("暂不支持").Message().AsChain(), true)
+		parseResult.Event.Reply(message.NewText("暂不支持").Segment().AsChain(), true)
 	}
 }
 
