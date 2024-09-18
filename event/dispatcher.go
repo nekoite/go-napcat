@@ -66,6 +66,18 @@ func (d *Dispatcher) SetGlobalCommandPrefix(prefix string) {
 }
 
 func (d *Dispatcher) Dispatch(event IEvent) {
+	if event.GetEventType() == EventTypeMessage {
+		e := event.(IMessageEvent)
+		if d.isGoroutineMode {
+			go d.commandCenter.onMessageRecv(e)
+		} else {
+			d.commandCenter.onMessageRecv(e)
+			if e.isDefaultPrevented() {
+				return
+			}
+		}
+	}
+
 	for _, handler := range d.handlers.all {
 		if d.isGoroutineMode {
 			go handler(event)
@@ -80,14 +92,6 @@ func (d *Dispatcher) Dispatch(event IEvent) {
 	switch event.GetEventType() {
 	case EventTypeMessage:
 		e := event.(IMessageEvent)
-		if d.isGoroutineMode {
-			go d.commandCenter.onMessageRecv(e)
-		} else {
-			d.commandCenter.onMessageRecv(e)
-			if e.isDefaultPrevented() {
-				return
-			}
-		}
 		met := e.GetMessageEventType()
 		if met == MessageEventTypePrivate {
 			for _, handler := range d.handlers.privateMessage {

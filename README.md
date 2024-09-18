@@ -46,8 +46,8 @@ go get -u github.com/nekoite/go-napcat
 
 ### 事件处理顺序
 
-1. 监听所有事件的处理器（HandlerAllTypes）
-2. 指令（Command）- 仅对消息事件有效
+1. 指令（Command）- 仅对消息事件有效
+2. 监听所有事件的处理器（HandlerAllTypes）
 3. 监听各种事件的处理器
 
 ### 事件
@@ -59,6 +59,8 @@ go get -u github.com/nekoite/go-napcat
 所有事件都实现 `IEvent` 接口，使用 `GetEventType()` 查询事件类型后，将事件转为一个具体实现结构体。具体实现在 `event.*Event` 结构体。
 
 可以使用 `event.GetAs` 函数做类型转换，失败返回 `nil`。使用 `event.GetAsUnsafe` 做类型转换，效果和 `e.(*T)` 一样，失败会 panic。使用 `event.GetAsOrError` 做类型转换，失败会返回 `nil, errors.ErrTypeAssertion`。
+
+使用 `IEvent::SetContext(any)` 和 `IEvent::Context()` 来设置或获取你想使用的上下文。它可以是任意对象。建议使用一个 `map`。
 
 ### 指令
 
@@ -77,6 +79,8 @@ go get -u github.com/nekoite/go-napcat
 如果名称模式为 `CmdNameModePrefix`，则提供的名称将作为前缀与上述处理后的指令名称匹配。例如，如果消息是 `prefABC`，而 `GetName()` 返回 `("pref", CmdNameModePrefix)`，则匹配成功，并且指令名称是 `pref`，剩余部分是 `ABC`。消息前缀将先被反转义后作比较。
 
 如果名称模式为 `CmdNameModeNormal`，则直接用处理后得到的指令名称反转义后进行匹配查找。
+
+如果指令还实现了 `event.ICommandStopPropagation` 接口，并且函数返回 `true`，则处理完这个指令后，事件将不会继续传播（不会触发其它事件处理器）。
 
 #### 全局指令激活前缀
 

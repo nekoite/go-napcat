@@ -39,6 +39,11 @@ type ICommandWithPreprocess interface {
 	Preprocess(remaining string) string
 }
 
+type ICommandStopPropagation interface {
+	// StopPropagation 返回 true 时，事件将在指令处理完成后停止继续处理其它处理器。
+	StopPropagation() bool
+}
+
 type CommandCenter struct {
 	logger       *zap.Logger
 	globalPrefix string
@@ -119,6 +124,9 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	parseResult.StdOut = stdout.String()
 	parseResult.StdErr = stderr.String()
 	cmd.OnCommand(parseResult)
+	if cmd.(ICommandStopPropagation).StopPropagation() {
+		event.PreventDefault()
+	}
 }
 
 func (c *CommandCenter) getCommand(raw string) (ICommand, string) {

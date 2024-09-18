@@ -100,6 +100,9 @@ type IEvent interface {
 	PreventDefault()
 	GetError() error
 
+	SetContext(any)
+	Context() any
+
 	isDefaultPrevented() bool
 	setApiSender(*api.Sender)
 	setError(error)
@@ -120,6 +123,7 @@ type BaseEvent struct {
 	SelfId    qq.UserId `json:"self_id"`
 	EventType EventType `json:"post_type"`
 
+	context     any         `json:"-"`
 	isPrevented bool        `json:"-"`
 	apiSender   *api.Sender `json:"-"`
 	error       error       `json:"-"`
@@ -143,6 +147,14 @@ func (e *BaseEvent) PreventDefault() {
 
 func (e *BaseEvent) GetError() error {
 	return e.error
+}
+
+func (e *BaseEvent) SetContext(ctx any) {
+	e.context = ctx
+}
+
+func (e *BaseEvent) Context() any {
+	return e.context
 }
 
 func (e *BaseEvent) isDefaultPrevented() bool {
