@@ -166,7 +166,7 @@ func (b *Bot) SendGroupMsg(groupId qq.GroupId, message *message.Chain) (qq.Messa
 	return extractRespMessageId(b.api.SendGroupMsg(groupId, message))
 }
 
-func (b *Bot) SendMsg(msg any, autoEscape bool) (qq.MessageId, error) {
+func (b *Bot) SendMsg(msg api.SendMsgReqParams, autoEscape bool) (qq.MessageId, error) {
 	return extractRespMessageId(b.api.SendMsg(msg, autoEscape))
 }
 
