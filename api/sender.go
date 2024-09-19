@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -74,7 +75,7 @@ type Sender struct {
 	reqMap  sync.Map
 }
 
-type Req struct {
+type internalReq struct {
 	id     int64
 	resp   chan apiResp
 	action Action
@@ -93,11 +94,11 @@ type apiResp struct {
 	Raw     []byte `json:"-"`
 }
 
-type SendMsgReqParams[T message.SendableMessage] struct {
+type SendMsgReqParams struct {
 	MessageType string    `json:"message_type"`
 	UserId      qq.UserId `json:"user_id,omitempty"`
 	GroupId     int64     `json:"group_id,omitempty"`
-	Message     T         `json:"message"`
+	Message     any       `json:"message"`
 	AutoEscape  bool      `json:"auto_escape,omitempty"`
 }
 
@@ -110,10 +111,14 @@ func NewSender(logger *zap.Logger, conn *ws.Client, timeout int) *Sender {
 	}
 }
 
-func (s *Sender) NewReq(action Action) *Req {
-	return &Req{
+func (s *Sender) newReq(action Action, needResp bool) *internalReq {
+	var respChan chan apiResp = nil
+	if needResp {
+		respChan = make(chan apiResp, 1)
+	}
+	return &internalReq{
 		id:     s.sendId.Add(1),
-		resp:   make(chan apiResp, 1),
+		resp:   respChan,
 		action: action,
 	}
 }
@@ -129,15 +134,17 @@ func (s *Sender) HandleApiResp(resp []byte) error {
 		return err
 	}
 	if req, ok := s.reqMap.LoadAndDelete(int64(id)); ok {
-		req.(*Req).resp <- r
+		req := req.(*internalReq)
+		if req.resp != nil {
+			req.resp <- r
+		}
 		return nil
 	}
 	return errors.ErrUnknownResponse
 }
 
-func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
-	req := s.NewReq(action)
-	s.reqMap.Store(req.id, req)
+func (s *Sender) sendRaw(action Action, params any, needResp bool) (IResp, error) {
+	req := s.newReq(action, needResp)
 	apiReq := &apiReq{
 		Action: req.action,
 		Params: params,
@@ -147,7 +154,11 @@ func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.reqMap.Store(req.id, req)
 	s.conn.Send(raw)
+	if !needResp {
+		return nil, nil
+	}
 	select {
 	case resp := <-req.resp:
 		return parseResp(req.action, resp)
@@ -155,6 +166,20 @@ func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
 		s.logger.Error("timeout", zap.String("action", string(action)), zap.Any("params", params), zap.Int("echo", int(req.id)))
 		return nil, errors.ErrTimeout
 	}
+}
+
+// SendRaw 发送原始请求，等待并获取响应。函数将在等待响应送达后返回响应数据。
+// 如果响应超时，将返回 [errors.ErrTimeout]。
+func (s *Sender) SendRaw(action Action, params any) (IResp, error) {
+	return s.sendRaw(action, params, true)
+}
+
+// SendRawNoResp 发送原始请求，不等待和获取响应。函数将会在发送请求后立即返回。
+// 如果请求由于网络原因未被接收，也不会报错。
+// 如果需要获取响应，请使用 [SendRaw]。
+func (s *Sender) SendRawNoResp(action Action, params any) error {
+	_, err := s.sendRaw(action, params, false)
+	return err
 }
 
 func (s *Sender) SendPrivateMsgString(userId qq.UserId, message string, autoEscape bool) (*Resp[RespDataMessageId], error) {
@@ -187,11 +212,12 @@ func (s *Sender) SendGroupMsg(groupId qq.GroupId, message *message.Chain) (*Resp
 	}))
 }
 
-func (s *Sender) SendMsg(msg any, autoEscape bool) (*Resp[RespDataMessageId], error) {
-	switch msg := msg.(type) {
-	case SendMsgReqParams[string]:
+func (s *Sender) SendMsg(msg SendMsgReqParams, autoEscape bool) (*Resp[RespDataMessageId], error) {
+	switch msg.Message.(type) {
+	case string, *string, *message.Chain:
 		return returnAsType[RespDataMessageId](s.SendRaw(ActionSendMsg, msg))
-	case SendMsgReqParams[*message.Chain]:
+	case fmt.Stringer:
+		msg.Message = msg.Message.(fmt.Stringer).String()
 		return returnAsType[RespDataMessageId](s.SendRaw(ActionSendMsg, msg))
 	}
 	return nil, errors.ErrInvalidMessage
@@ -201,6 +227,12 @@ func (s *Sender) DeleteMsg(messageId qq.MessageId) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionDeleteMsg, map[string]any{
 		"message_id": messageId,
 	}))
+}
+
+func (s *Sender) DeleteMsgNoResp(messageId qq.MessageId) error {
+	return s.SendRawNoResp(ActionDeleteMsg, map[string]any{
+		"message_id": messageId,
+	})
 }
 
 func (s *Sender) GetMsg(messageId qq.MessageId) (*Resp[RespDataMessage], error) {
@@ -222,6 +254,13 @@ func (s *Sender) SendLike(userId qq.UserId, times int) (*Resp[utils.Void], error
 	}))
 }
 
+func (s *Sender) SendLikeNoResp(userId qq.UserId, times int) error {
+	return s.SendRawNoResp(ActionSendLike, map[string]any{
+		"user_id": userId,
+		"times":   times,
+	})
+}
+
 // SetGroupKick 将用户踢出群组。groupId 为群组 ID，userId 为要踢的用户 QQ，rejectAddRequest 为是否拒绝此人的加群请求。
 func (s *Sender) SetGroupKick(groupId qq.GroupId, userId qq.UserId, rejectAddRequest bool) (*Resp[utils.Void], error) {
 	return returnAsType[utils.Void](s.SendRaw(ActionSetGroupKick, map[string]any{
@@ -229,6 +268,14 @@ func (s *Sender) SetGroupKick(groupId qq.GroupId, userId qq.UserId, rejectAddReq
 		"user_id":            userId,
 		"reject_add_request": rejectAddRequest,
 	}))
+}
+
+func (s *Sender) SetGroupKickNoResp(groupId qq.GroupId, userId qq.UserId, rejectAddRequest bool) error {
+	return s.SendRawNoResp(ActionSetGroupKick, map[string]any{
+		"group_id":           groupId,
+		"user_id":            userId,
+		"reject_add_request": rejectAddRequest,
+	})
 }
 
 // SetGroupBan 禁言用户。groupId 为群组 ID，userId 为要禁言的用户 QQ，duration 为禁言时长（秒），0 为解除禁言。
@@ -268,6 +315,13 @@ func (s *Sender) SetGroupAnonymous(groupId qq.GroupId, enable bool) (*Resp[utils
 		"group_id": groupId,
 		"enable":   enable,
 	}))
+}
+
+func (s *Sender) SetGroupAnonymousNoResp(groupId qq.GroupId, enable bool) error {
+	return s.SendRawNoResp(ActionSetGroupAnonymous, map[string]any{
+		"group_id": groupId,
+		"enable":   enable,
+	})
 }
 
 func (s *Sender) SetGroupCard(groupId qq.GroupId, userId qq.UserId, card string) (*Resp[utils.Void], error) {
