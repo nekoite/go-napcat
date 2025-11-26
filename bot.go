@@ -129,6 +129,7 @@ func (b *Bot) Start() error {
 	if err != nil {
 		b.logger.Error("failed to start ws connection", zap.Error(err))
 		b.Close()
+		return err
 	}
 	err = b.initializeBotInfo()
 	if err != nil {
