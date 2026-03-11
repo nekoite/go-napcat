@@ -21,6 +21,8 @@ go get -u github.com/nekoite/go-napcat
 
 然后，使用 `config.BotConfigFromYamlFile` 从配置文件读取配置或使用 `config.DefaultBotConfig` 手动配置。将其传入 `gonapcat.NewBot(*config.BotConfig)` 创建新的机器人实例。Config 中使用的机器人 QQ 号需要与对应的 NapCat（或 OneBot）客户端上使用的一致。
 
+`BotConfig.Ws.MaxReconnect` 用于控制 WebSocket 断开后的最大重连次数，默认值为 `3`。将其设为 `0` 可禁用自动重连，设为负数则表示无限重连。
+
 > [!CAUTION]
 > 不建议打开 `BotConfig.UseGoroutine`，它会在每个事件处理器中创建新的 goroutine 来处理事件。每一个事件已经是在单独的 goroutine 中运行了。
 

@@ -7,37 +7,39 @@ import (
 )
 
 type WsConfig struct {
-	Host        string
-	Port        int
-	Endpoint    string
-	Token       string
-	Timeout     int // in milliseconds
-	PingPeriod  int // in milliseconds
-	PongTimeout int // in milliseconds
+	Host         string `yaml:"host"`
+	Port         int    `yaml:"port"`
+	Endpoint     string `yaml:"endpoint"`
+	Token        string `yaml:"token"`
+	Timeout      int    `yaml:"timeout"`     // in milliseconds
+	PingPeriod   int    `yaml:"pingPeriod"`  // in milliseconds
+	PongTimeout  int    `yaml:"pongTimeout"` // in milliseconds
+	MaxReconnect int    `yaml:"maxReconnect"`
 }
 
 type BotConfig struct {
-	Ws           WsConfig
-	Id           int64
-	Debug        bool
-	UseGoroutine bool
-	ApiTimeout   int
+	Ws           WsConfig `yaml:"ws"`
+	Id           int64    `yaml:"id"`
+	Debug        bool     `yaml:"debug"`
+	UseGoroutine bool     `yaml:"useGoroutine"`
+	ApiTimeout   int      `yaml:"apiTimeout"`
 }
 
 type LogConfig struct {
-	Level string
-	Paths []string
-	Debug bool
+	Level string   `yaml:"level"`
+	Paths []string `yaml:"paths"`
+	Debug bool     `yaml:"debug"`
 }
 
 var defaultBotCfg = BotConfig{
 	Ws: WsConfig{
-		Host:        "localhost",
-		Port:        3001,
-		Endpoint:    "/",
-		Timeout:     10000,
-		PingPeriod:  54000,
-		PongTimeout: 60000,
+		Host:         "localhost",
+		Port:         3001,
+		Endpoint:     "/",
+		Timeout:      10000,
+		PingPeriod:   54000,
+		PongTimeout:  60000,
+		MaxReconnect: 3,
 	},
 	ApiTimeout: 30000,
 }
@@ -70,6 +72,11 @@ func (c *BotConfig) WithWs(host string, port int, endpoint string) *BotConfig {
 	c.Ws.Host = host
 	c.Ws.Port = port
 	c.Ws.Endpoint = endpoint
+	return c
+}
+
+func (c *BotConfig) WithWsMaxReconnect(maxReconnect int) *BotConfig {
+	c.Ws.MaxReconnect = maxReconnect
 	return c
 }
 
