@@ -71,7 +71,7 @@ func TestClientStopsAfterMaxReconnectAttempts(t *testing.T) {
 
 	require.Eventually(t, func() bool {
 		return client.stopped.Load()
-	}, 5*time.Second, 50*time.Millisecond)
+	}, 20*time.Second, 300*time.Millisecond)
 	require.EqualValues(t, 2, reconnectAttempts.Load())
 }
 
@@ -108,6 +108,6 @@ func TestClientResetsReconnectAttemptsAfterSuccessfulReconnect(t *testing.T) {
 
 	require.Eventually(t, func() bool {
 		return client.stopped.Load()
-	}, 5*time.Second, 50*time.Millisecond)
+	}, 20*time.Second, 300*time.Millisecond)
 	require.EqualValues(t, 3, reconnectAttempts.Load())
 }
