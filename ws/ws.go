@@ -109,7 +109,8 @@ func (c *Client) run() {
 			}
 
 			attempt++
-			c.logger.Warn("connection closed unexpectedly, reconnecting", zap.Int("attempt", attempt), zap.Int("maxReconnect", c.maxReconnect), zap.Error(err))
+			c.logger.Warn("connection closed unexpectedly, reconnecting after 3 seconds", zap.Int("attempt", attempt), zap.Int("maxReconnect", c.maxReconnect), zap.Error(err))
+			time.Sleep(3 * time.Second)
 
 			nextConn, reconnectErr := c.setupFunc()
 			if reconnectErr != nil {
