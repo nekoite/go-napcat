@@ -17,6 +17,7 @@ type MusicType string
 const (
 	SegmentTypeText      SegmentType = "text"
 	SegmentTypeFace      SegmentType = "face"
+	SegmentTypeMface     SegmentType = "mface" // MessageTypeMface 商城表情
 	SegmentTypeImage     SegmentType = "image"
 	SegmentTypeRecord    SegmentType = "record"
 	SegmentTypeVideo     SegmentType = "video" // MessageTypeVideo 短视频
@@ -38,10 +39,10 @@ const (
 
 	MusicTypeQQ     MusicType = "qq"
 	MusicType163    MusicType = "163"
-	MusicTypeXm     MusicType = "xm"
+	MusicTypeKugou  MusicType = "kugou"
+	MusicTypeKuwo   MusicType = "kuwo"
+	MusicTypeMigu   MusicType = "migu"
 	MusicTypeCustom MusicType = "custom"
-
-	ImageTypeFlash = "flash"
 )
 
 var (
@@ -63,11 +64,12 @@ type BasicIdData struct {
 }
 
 type BasicFileData struct {
-	File    string `json:"file"`
-	URL     string `json:"url,omitempty"`
-	Cache   *int   `json:"cache,omitempty"`
-	Proxy   *int   `json:"proxy,omitempty"`
-	Timeout *int   `json:"timeout,omitempty"`
+	File     string `json:"file"`
+	URL      string `json:"url,omitempty"`
+	FileSize int64  `json:"file_size,omitempty"`
+	Cache    *int   `json:"cache,omitempty"`
+	Proxy    *int   `json:"proxy,omitempty"`
+	Timeout  *int   `json:"timeout,omitempty"`
 }
 
 type FileData struct {
@@ -76,21 +78,38 @@ type FileData struct {
 	Name string `json:"name,omitempty"`
 }
 
-type FaceData BasicIdData
+type FaceData struct {
+	BasicIdData
+	ResultId   string `json:"result_id,omitempty"`
+	ChainCount int64  `json:"chain_count,omitempty"`
+}
+
+type MfaceData struct {
+	EmojiId        string `json:"emoji_id"`
+	EmojiPackageId string `json:"emoji_package_id"`
+	Key            string `json:"key"`
+	Summary        string `json:"summary"`
+}
 
 type ImageData struct {
 	BasicFileData
 	// Summary 自定义显示的文件名【LLOneBot 扩展】
-	Summary string `json:"summary,omitempty"`
-	Type    string `json:"type,omitempty"`
+	Summary        string `json:"summary,omitempty"`
+	SubType        int64  `json:"sub_type,omitempty"`
+	Key            string `json:"key,omitempty"`
+	EmojiId        string `json:"emoji_id,omitempty"`
+	EmojiPackageId string `json:"emoji_package_id,omitempty"`
 }
 
 type RecordData struct {
 	BasicFileData
-	Magic int `json:"magic,omitempty"`
+	Path string `json:"path,omitempty"`
 }
 
-type VideoData BasicFileData
+type VideoData struct {
+	BasicFileData
+	Thumb string `json:"thumb,omitempty"`
+}
 
 type AtData struct {
 	QQ string `json:"qq"`
@@ -132,7 +151,10 @@ type LocationData struct {
 }
 
 type BasicMusicData struct {
-	Type MusicType `json:"type"`
+	Type    MusicType `json:"type"`
+	Singer  string    `json:"singer,omitempty"`
+	Title   string    `json:"title,omitempty"`
+	Content string    `json:"content,omitempty"`
 }
 
 type MusicData struct {
@@ -142,9 +164,8 @@ type MusicData struct {
 
 type CustomMusicData struct {
 	BasicMusicData
-	Title string `json:"title"`
 	Url   string `json:"url"`
-	Audio string `json:"audio"`
+	Image string `json:"image"`
 }
 
 type ReplyData BasicIdData
@@ -285,6 +306,8 @@ func (m *Segment) UnmarshalJSON(data []byte) error {
 		d = new(TextData)
 	case SegmentTypeFace:
 		d = new(FaceData)
+	case SegmentTypeMface:
+		d = new(MfaceData)
 	case SegmentTypeImage:
 		d = new(ImageData)
 	case SegmentTypeRecord:
@@ -373,7 +396,11 @@ func NewTextSegment(text string) Segment {
 }
 
 func NewFace(id int64) *FaceData {
-	return &FaceData{Id: id}
+	return &FaceData{BasicIdData: BasicIdData{Id: id}}
+}
+
+func NewMface(emojiId, emojiPackageId, key, summary string) *MfaceData {
+	return &MfaceData{EmojiId: emojiId, EmojiPackageId: emojiPackageId, Key: key, Summary: summary}
 }
 
 func NewFaceSegment(id int64) Segment {
@@ -397,7 +424,7 @@ func NewRecordSegment(file string) Segment {
 }
 
 func NewVideo(file string) *VideoData {
-	return &VideoData{File: file}
+	return &VideoData{BasicFileData: BasicFileData{File: file}}
 }
 
 func NewVideoSegment(file string) Segment {
@@ -466,8 +493,8 @@ func NewMusic(t MusicType, id int64) *MusicData {
 	return &MusicData{BasicMusicData: BasicMusicData{Type: t}, BasicIdData: BasicIdData{Id: id}}
 }
 
-func NewCustomMusic(title, url, audio string) *CustomMusicData {
-	return &CustomMusicData{BasicMusicData: BasicMusicData{Type: MusicTypeCustom}, Title: title, Url: url, Audio: audio}
+func NewCustomMusic(title, url, image string) *CustomMusicData {
+	return &CustomMusicData{BasicMusicData: BasicMusicData{Type: MusicTypeCustom, Title: title}, Url: url, Image: image}
 }
 
 func NewReply(id qq.MessageId) *ReplyData {
@@ -509,14 +536,6 @@ func (d *ImageData) Segment() Segment {
 		Type: SegmentTypeImage,
 		Data: d,
 	}
-}
-
-func (d *ImageData) SetFlash() {
-	d.Type = ImageTypeFlash
-}
-
-func (d *ImageData) IsFlash() bool {
-	return d.Type == ImageTypeFlash
 }
 
 func (d *RecordData) Segment() Segment {
