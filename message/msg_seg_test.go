@@ -21,7 +21,7 @@ func TestGetTextData(t *testing.T) {
 	textData := message.GetTextData()
 	assert.Equal(&TextData{Text: "hello"}, textData)
 
-	message = Segment{Type: SegmentTypeFace, Data: FaceData{Id: 1}}
+	message = Segment{Type: SegmentTypeFace, Data: &FaceData{BasicIdData: BasicIdData{Id: 1}}}
 	assert.Nil(message.GetTextData())
 }
 
@@ -33,14 +33,14 @@ func TestGetImageData(t *testing.T) {
 	imageData := message.GetImageData()
 	assert.Equal(data, imageData)
 
-	message = Segment{Type: SegmentTypeFace, Data: FaceData{Id: 1}}
+	message = Segment{Type: SegmentTypeFace, Data: &FaceData{BasicIdData: BasicIdData{Id: 1}}}
 	assert.Nil(message.GetImageData())
 }
 
 func TestGetFaceData(t *testing.T) {
 	assert := assert.New(t)
 
-	data := &FaceData{Id: 1}
+	data := &FaceData{BasicIdData: BasicIdData{Id: 1}}
 	message := Segment{Type: SegmentTypeFace, Data: data}
 	faceData := message.GetFaceData()
 	assert.Equal(data, faceData)

@@ -67,12 +67,13 @@ func (m Segment) buildDataSegmentString(sb *strings.Builder) {
 		}
 		tags := strings.Split(tag.Get("json"), ",")
 		remaining := utils.NewSetFrom(tags[1:]...)
-		fmt.Fprintf(sb, ",%s=", tags[0])
 		if remaining.Contains("omitempty") {
 			if !v.IsZero() {
+				fmt.Fprintf(sb, ",%s=", tags[0])
 				sb.WriteString(EscapeCQString(fmt.Sprintf("%v", v.Interface())))
 			}
 		} else {
+			fmt.Fprintf(sb, ",%s=", tags[0])
 			sb.WriteString(EscapeCQString(fmt.Sprintf("%v", v.Interface())))
 		}
 		return nil

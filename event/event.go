@@ -56,15 +56,18 @@ const (
 	MessageEventSubtypeAnonymous MessageEventSubtype = "anonymous"
 	MessageEventSubtypeNotice    MessageEventSubtype = "notice"
 
-	NoticeEventTypeGroupUpload   NoticeEventType = "group_upload"
-	NoticeEventTypeGroupAdmin    NoticeEventType = "group_admin"
-	NoticeEventTypeGroupDecrease NoticeEventType = "group_decrease"
-	NoticeEventTypeGroupIncrease NoticeEventType = "group_increase"
-	NoticeEventTypeGroupBan      NoticeEventType = "group_ban"
-	NoticeEventTypeGroupRecall   NoticeEventType = "group_recall"
-	NoticeEventTypeFriendAdd     NoticeEventType = "friend_add"
-	NoticeEventTypeFriendRecall  NoticeEventType = "friend_recall"
-	NoticeEventTypeNotify        NoticeEventType = "notify"
+	NoticeEventTypeEssence           NoticeEventType = "essence"
+	NoticeEventTypeGroupAdmin        NoticeEventType = "group_admin"
+	NoticeEventTypeGroupBan          NoticeEventType = "group_ban"
+	NoticeEventTypeGroupCard         NoticeEventType = "group_card"
+	NoticeEventTypeGroupDecrease     NoticeEventType = "group_decrease"
+	NoticeEventTypeGroupIncrease     NoticeEventType = "group_increase"
+	NoticeEventTypeGroupMsgEmojiLike NoticeEventType = "group_msg_emoji_like"
+	NoticeEventTypeGroupRecall       NoticeEventType = "group_recall"
+	NoticeEventTypeGroupUpload       NoticeEventType = "group_upload"
+	NoticeEventTypeFriendAdd         NoticeEventType = "friend_add"
+	NoticeEventTypeFriendRecall      NoticeEventType = "friend_recall"
+	NoticeEventTypeNotify            NoticeEventType = "notify"
 
 	NoticeEventSubtypeApprove   NoticeEventSubtype = "approve"
 	NoticeEventSubtypeInvite    NoticeEventSubtype = "invite"
@@ -78,6 +81,7 @@ const (
 	NoticeEventSubtypeHonor     NoticeEventSubtype = "honor"
 	NoticeEventSubtypeBan       NoticeEventSubtype = "ban"
 	NoticeEventSubtypeLiftBan   NoticeEventSubtype = "lift_ban"
+	NoticeEventSubtypeTitle     NoticeEventSubtype = "title"
 
 	RequestEventTypeFriend RequestEventType = "friend"
 	RequestEventTypeGroup  RequestEventType = "group"
@@ -204,6 +208,15 @@ type GroupNoticeEvent struct {
 	GroupId qq.GroupId `json:"group_id"`
 }
 
+// NoticeEventEssence 群消息设置/取消精华事件。
+// SubType 为 add 表示设置精华，delete 表示取消精华。
+type NoticeEventEssence struct {
+	GroupNoticeEvent
+	SenderId   qq.UserId    `json:"sender_id"`
+	MessageId  qq.MessageId `json:"message_id"`
+	OperatorId qq.UserId    `json:"operator_id"`
+}
+
 type NoticeEventGroupUpload struct {
 	GroupNoticeEvent
 	File struct {
@@ -244,6 +257,29 @@ type NoticeEventGroupNotify struct {
 type NoticeEventGroupHonor struct {
 	GroupNoticeEvent
 	HonorType HonorType `json:"honor_type"`
+}
+
+// NoticeEventGroupMsgEmojiLike 群消息表情点赞事件。
+// 这是 napcat 特有的事件，其他平台不一定支持。
+type NoticeEventGroupMsgEmojiLike struct {
+	GroupNoticeEvent
+	MessageId qq.MessageId `json:"message_id"`
+	Likes     []struct {
+		EmojiId string `json:"emoji_id"`
+		Count   int64  `json:"count"`
+	} `json:"likes"`
+	IsAdd bool `json:"is_add"`
+}
+
+type NoticeEventGroupCard struct {
+	GroupNoticeEvent
+	CardNew string `json:"card_new"`
+	CardOld string `json:"card_old"`
+}
+
+type NoticeEventGroupTitle struct {
+	GroupNoticeEvent
+	Title string `json:"title"`
 }
 
 type RequestEvent struct {
@@ -396,24 +432,32 @@ func ParseEvent(data []byte, apiSender *api.Sender) (IEvent, error) {
 		}
 	case EventTypeNotice:
 		switch NoticeEventType(typeInfos[2].String()) {
-		case NoticeEventTypeGroupUpload:
-			e = new(NoticeEventGroupUpload)
-		case NoticeEventTypeGroupIncrease, NoticeEventTypeGroupDecrease:
-			e = new(NoticeEventGroupOperation)
-		case NoticeEventTypeGroupBan:
-			e = new(NoticeEventGroupBan)
-		case NoticeEventTypeGroupRecall:
-			e = new(NoticeEventGroupRecall)
-		case NoticeEventTypeFriendRecall:
-			e = new(NoticeEventFriendRecall)
+		case NoticeEventTypeEssence:
+			e = new(NoticeEventEssence)
 		case NoticeEventTypeGroupAdmin:
 			e = new(GroupNoticeEvent)
+		case NoticeEventTypeGroupBan:
+			e = new(NoticeEventGroupBan)
+		case NoticeEventTypeGroupCard:
+			e = new(NoticeEventGroupCard)
+		case NoticeEventTypeGroupIncrease, NoticeEventTypeGroupDecrease:
+			e = new(NoticeEventGroupOperation)
+		case NoticeEventTypeGroupMsgEmojiLike:
+			e = new(NoticeEventGroupMsgEmojiLike)
+		case NoticeEventTypeGroupRecall:
+			e = new(NoticeEventGroupRecall)
+		case NoticeEventTypeGroupUpload:
+			e = new(NoticeEventGroupUpload)
+		case NoticeEventTypeFriendRecall:
+			e = new(NoticeEventFriendRecall)
 		case NoticeEventTypeNotify:
 			switch NoticeEventSubtype(typeInfos[4].String()) {
 			case NoticeEventSubtypeHonor:
 				e = new(NoticeEventGroupHonor)
 			case NoticeEventSubtypeLuckyKing, NoticeEventSubtypePoke:
 				e = new(NoticeEventGroupNotify)
+			case NoticeEventSubtypeTitle:
+				e = new(NoticeEventGroupTitle)
 			default:
 				err = errors.ErrUnknownNoticeEvent
 				e = new(NoticeEvent)

@@ -29,7 +29,7 @@ func TestChainToString(t *testing.T) {
 	chain := Chain{
 		Messages: []Segment{
 			{Type: SegmentTypeText, Data: &TextData{Text: "Hello, w=orld!&?"}},
-			{Type: SegmentTypeFace, Data: &FaceData{Id: 1}},
+			{Type: SegmentTypeFace, Data: &FaceData{BasicIdData: BasicIdData{Id: 1}}},
 			{Type: SegmentTypeAt, Data: &AtData{QQ: "123456"}},
 			{Type: SegmentTypeText, Data: &TextData{Text: "another&text"}},
 		},
@@ -55,7 +55,7 @@ func TestFaceCQToChain(t *testing.T) {
 	cq := "[CQ:face,id=1]"
 	expected := &Chain{
 		Messages: []Segment{
-			{Type: SegmentTypeFace, Data: &FaceData{Id: 1}},
+			{Type: SegmentTypeFace, Data: &FaceData{BasicIdData: BasicIdData{Id: 1}}},
 		},
 	}
 	actual, err := ParseCQString(cq)
@@ -73,7 +73,7 @@ func TestCustomNodeCQToChain(t *testing.T) {
 				Nickname: "某人",
 				Content: &Chain{
 					Messages: []Segment{
-						{Type: SegmentTypeFace, Data: &FaceData{Id: 123}},
+						{Type: SegmentTypeFace, Data: &FaceData{BasicIdData: BasicIdData{Id: 123}}},
 						{Type: SegmentTypeText, Data: &TextData{Text: "哈喽&~"}},
 					},
 				},
@@ -91,7 +91,7 @@ func TestChainCQToChain(t *testing.T) {
 	expected := &Chain{
 		Messages: []Segment{
 			{Type: SegmentTypeText, Data: &TextData{Text: "Hello, w=orld!&?"}},
-			{Type: SegmentTypeFace, Data: &FaceData{Id: 1}},
+			{Type: SegmentTypeFace, Data: &FaceData{BasicIdData: BasicIdData{Id: 1}}},
 			{Type: SegmentTypeAt, Data: &AtData{QQ: "123456"}},
 			{Type: SegmentTypeText, Data: &TextData{Text: "another&text"}},
 		},

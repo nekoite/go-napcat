@@ -16,6 +16,7 @@ import (
 	"github.com/nekoite/go-napcat/extensions/napcat"
 	"github.com/nekoite/go-napcat/message"
 	"github.com/tidwall/gjson"
+	"go.uber.org/zap"
 )
 
 type MusicCommandArgs struct {
@@ -59,13 +60,26 @@ func (c *MusicCommand) OnCommand(parseResult *event.ParseResult) {
 	case "qq":
 		id, err := getQQMusicId(args.SongName)
 		if err != nil {
-			_, _ = parseResult.Event.Reply(message.NewText(err.Error()).Segment().AsChain(), true)
+			c.bot.Logger().Error("get music id error", zap.Error(err))
+			_, err = parseResult.Event.Reply(message.NewText(err.Error()).Segment().AsChain(), true)
+			if err != nil {
+				c.bot.Logger().Error("reply get music id error", zap.Error(err))
+			}
 			return
 		}
-		_, _ = napcat.SetMsgEmojiLike(c.bot, parseResult.Event.GetMessageId(), 128166)
-		_, _ = parseResult.Event.Reply(message.NewMusic(message.MusicTypeQQ, id).Segment().AsChain(), false)
+		_, err = napcat.SetMsgEmojiLike(c.bot, parseResult.Event.GetMessageId(), napcat.Emoji水)
+		if err != nil {
+			c.bot.Logger().Error("set emoji like error", zap.Error(err))
+		}
+		_, err = parseResult.Event.Reply(message.NewMusic(message.MusicTypeQQ, id).Segment().AsChain(), false)
+		if err != nil {
+			c.bot.Logger().Error("reply music error", zap.Error(err))
+		}
 	default:
-		_, _ = parseResult.Event.Reply(message.NewText("暂不支持").Segment().AsChain(), true)
+		_, err := parseResult.Event.Reply(message.NewText("暂不支持").Segment().AsChain(), true)
+		if err != nil {
+			c.bot.Logger().Error("reply unsupported platform error", zap.Error(err))
+		}
 	}
 }
 

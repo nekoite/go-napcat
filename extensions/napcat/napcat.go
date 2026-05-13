@@ -124,11 +124,11 @@ func ForwardGroupSingleMsg(bot *gonapcat.Bot, groupId qq.GroupId, messageId qq.M
 
 // SetMsgEmojiLike 设置消息点赞。
 //
-// emojiId 列表：https://bot.q.qq.com/wiki/develop/api-v2/openapi/emoji/model.html#EmojiType
-func SetMsgEmojiLike(bot *gonapcat.Bot, messageId qq.MessageId, emojiId int) (*api.Resp[utils.Void], error) {
+// emojiId 见 [EmojiID] 常量。
+func SetMsgEmojiLike(bot *gonapcat.Bot, messageId qq.MessageId, emojiId EmojiID) (*api.Resp[utils.Void], error) {
 	return returnAsType[utils.Void](bot.SendRaw(ActionSetMsgEmojiLike, map[string]any{
 		"message_id": messageId,
-		"emoji_id":   emojiId,
+		"emoji_id":   int(emojiId),
 	}))
 }
 
