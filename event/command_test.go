@@ -208,3 +208,66 @@ func TestGetCommandModePrefix(t *testing.T) {
 	assert.Nil(actual)
 	assert.Equal("", pref)
 }
+
+func TestGetCommandWithGlobalPrefixes(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	topCmd := &testCommand{
+		name:             "top",
+		mode:             CmdNameModeNormal,
+		splitBySpaceOnly: true,
+	}
+	helpCmd := &testCommand{
+		name:             "help",
+		mode:             CmdNameModePrefix,
+		splitBySpaceOnly: true,
+	}
+	c.Commands["top"] = topCmd
+	c.PrefixCommands = append(c.PrefixCommands, helpCmd)
+	c.SetGlobalCommandPrefixes([]string{".", "。"})
+
+	actual, pref := c.getCommand(".top 次 10")
+	assert.Equal(topCmd, actual)
+	assert.Equal(".top", pref)
+
+	actual, pref = c.getCommand("。top 次 10")
+	assert.Equal(topCmd, actual)
+	assert.Equal("。top", pref)
+
+	actual, pref = c.getCommand("。helpme")
+	assert.Equal(helpCmd, actual)
+	assert.Equal("。help", pref)
+
+	actual, pref = c.getCommand("top 次 10")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+
+	actual, pref = c.getCommand(".unknown")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+}
+
+func TestSetGlobalCommandPrefixCompat(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	topCmd := &testCommand{
+		name:             "top",
+		mode:             CmdNameModeNormal,
+		splitBySpaceOnly: true,
+	}
+	c.Commands["top"] = topCmd
+
+	c.SetGlobalCommandPrefix(".")
+	actual, pref := c.getCommand(".top")
+	assert.Equal(topCmd, actual)
+	assert.Equal(".top", pref)
+
+	actual, pref = c.getCommand("。top")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+
+	c.SetGlobalCommandPrefix("")
+	actual, pref = c.getCommand("top")
+	assert.Equal(topCmd, actual)
+	assert.Equal("top", pref)
+}
