@@ -1,7 +1,9 @@
 package event
 
 import (
+	"sort"
 	"strings"
+	"sync/atomic"
 
 	"github.com/alecthomas/kong"
 	"github.com/nekoite/go-napcat/message"
@@ -46,7 +48,7 @@ type ICommandStopPropagation interface {
 
 type CommandCenter struct {
 	logger         *zap.Logger
-	globalPrefixes []string
+	globalPrefixes atomic.Pointer[[]string]
 
 	Commands       map[string]ICommand
 	PrefixCommands []ICommand
@@ -78,14 +80,17 @@ func (c *CommandCenter) RegisterCommand(command ICommand) {
 
 func (c *CommandCenter) SetGlobalCommandPrefix(prefix string) {
 	if len(prefix) == 0 {
-		c.globalPrefixes = nil
+		c.storeGlobalPrefixes(nil)
 		return
 	}
-	c.globalPrefixes = []string{prefix}
+	c.storeGlobalPrefixes([]string{prefix})
 }
 
 // SetGlobalCommandPrefixes 设置一组全局命令前缀，命中其中任意一个即可触发命令解析。
 // 传入空切片表示不要求任何前缀。
+// 该方法会按前缀长度倒序排序，确保发生重叠时最长前缀优先匹配（例如同时配置
+// "!" 和 "!!" 时，"!!cmd" 会以 "!!" 命中），调用方传入顺序无影响。
+// 方法可在任意 goroutine 中安全调用，与并发的命令分发不会发生数据竞争。
 func (c *CommandCenter) SetGlobalCommandPrefixes(prefixes []string) {
 	filtered := make([]string, 0, len(prefixes))
 	for _, p := range prefixes {
@@ -94,7 +99,26 @@ func (c *CommandCenter) SetGlobalCommandPrefixes(prefixes []string) {
 		}
 		filtered = append(filtered, p)
 	}
-	c.globalPrefixes = filtered
+	c.storeGlobalPrefixes(filtered)
+}
+
+// storeGlobalPrefixes 以 copy-on-write 的方式发布前缀列表，发布后切片不会再被修改，
+// 读取侧（getCommand）通过 atomic.Pointer 拿到的就是不可变快照，避免数据竞争。
+func (c *CommandCenter) storeGlobalPrefixes(prefixes []string) {
+	copied := append([]string(nil), prefixes...)
+	sort.SliceStable(copied, func(i, j int) bool {
+		return len(copied[i]) > len(copied[j])
+	})
+	c.globalPrefixes.Store(&copied)
+}
+
+// loadGlobalPrefixes 返回当前发布的前缀快照；未配置时返回 nil。
+func (c *CommandCenter) loadGlobalPrefixes() []string {
+	p := c.globalPrefixes.Load()
+	if p == nil {
+		return nil
+	}
+	return *p
 }
 
 func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
@@ -148,13 +172,14 @@ func (c *CommandCenter) getCommand(raw string) (ICommand, string) {
 	if len(pref) == 0 {
 		return nil, ""
 	}
-	if len(c.globalPrefixes) == 0 {
+	prefixes := c.loadGlobalPrefixes()
+	if len(prefixes) == 0 {
 		if cmd, matched := c.matchCommand(pref); cmd != nil {
 			return cmd, matched
 		}
 		return nil, ""
 	}
-	for _, gp := range c.globalPrefixes {
+	for _, gp := range prefixes {
 		if !strings.HasPrefix(pref, gp) {
 			continue
 		}
