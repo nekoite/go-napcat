@@ -4,13 +4,13 @@ go 1.25
 
 require (
 	github.com/agiledragon/gomonkey/v2 v2.13.0
-	github.com/alecthomas/kong v1.13.0
-	github.com/goccy/go-json v0.10.5
-	github.com/goccy/go-yaml v1.18.0
+	github.com/alecthomas/kong v1.15.0
+	github.com/goccy/go-json v0.10.6
+	github.com/goccy/go-yaml v1.19.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/stretchr/testify v1.11.1
-	github.com/tidwall/gjson v1.18.0
-	go.uber.org/zap v1.27.1
+	github.com/tidwall/gjson v1.19.0
+	go.uber.org/zap v1.28.0
 )
 
 require (

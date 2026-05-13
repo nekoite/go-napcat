@@ -122,6 +122,12 @@ func (b *Bot) SetGlobalCommandPrefix(prefix string) {
 	b.dispatcher.SetGlobalCommandPrefix(prefix)
 }
 
+// SetGlobalCommandPrefixes 设置一组全局命令前缀，命中其中任意一个即可触发命令解析。
+// 例如同时支持中英文句号 [".", "。"]。
+func (b *Bot) SetGlobalCommandPrefixes(prefixes []string) {
+	b.dispatcher.SetGlobalCommandPrefixes(prefixes)
+}
+
 // Start 启动机器人，连接到服务器并初始化 bot 信息。
 // Start 是不阻塞的，你需要手动处理阻塞。
 func (b *Bot) Start() error {

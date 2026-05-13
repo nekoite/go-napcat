@@ -1,6 +1,7 @@
 package event
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/alecthomas/kong"
@@ -207,4 +208,128 @@ func TestGetCommandModePrefix(t *testing.T) {
 	actual, pref = c.getCommand("[CQ:at,qq=123456]arg1 arg2 arg3")
 	assert.Nil(actual)
 	assert.Equal("", pref)
+}
+
+func TestGetCommandWithGlobalPrefixes(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	topCmd := &testCommand{
+		name:             "top",
+		mode:             CmdNameModeNormal,
+		splitBySpaceOnly: true,
+	}
+	helpCmd := &testCommand{
+		name:             "help",
+		mode:             CmdNameModePrefix,
+		splitBySpaceOnly: true,
+	}
+	c.Commands["top"] = topCmd
+	c.PrefixCommands = append(c.PrefixCommands, helpCmd)
+	c.SetGlobalCommandPrefixes([]string{".", "。"})
+
+	actual, pref := c.getCommand(".top 次 10")
+	assert.Equal(topCmd, actual)
+	assert.Equal(".top", pref)
+
+	actual, pref = c.getCommand("。top 次 10")
+	assert.Equal(topCmd, actual)
+	assert.Equal("。top", pref)
+
+	actual, pref = c.getCommand("。helpme")
+	assert.Equal(helpCmd, actual)
+	assert.Equal("。help", pref)
+
+	actual, pref = c.getCommand("top 次 10")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+
+	actual, pref = c.getCommand(".unknown")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+}
+
+func TestSetGlobalCommandPrefixCompat(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	topCmd := &testCommand{
+		name:             "top",
+		mode:             CmdNameModeNormal,
+		splitBySpaceOnly: true,
+	}
+	c.Commands["top"] = topCmd
+
+	c.SetGlobalCommandPrefix(".")
+	actual, pref := c.getCommand(".top")
+	assert.Equal(topCmd, actual)
+	assert.Equal(".top", pref)
+
+	actual, pref = c.getCommand("。top")
+	assert.Nil(actual)
+	assert.Equal("", pref)
+
+	c.SetGlobalCommandPrefix("")
+	actual, pref = c.getCommand("top")
+	assert.Equal(topCmd, actual)
+	assert.Equal("top", pref)
+}
+
+// TestGetCommandPrefixLongestWins 验证重叠前缀场景下，最长前缀优先匹配，与传入顺序无关。
+func TestGetCommandPrefixLongestWins(t *testing.T) {
+	assert := assert.New(t)
+	c := NewCommandCenter(zap.NewNop())
+	fooCmd := &testCommand{name: "foo", mode: CmdNameModeNormal, splitBySpaceOnly: true}
+	bfooCmd := &testCommand{name: "Bfoo", mode: CmdNameModeNormal, splitBySpaceOnly: true}
+	c.Commands["foo"] = fooCmd
+	c.Commands["Bfoo"] = bfooCmd
+
+	// 故意以“短前缀在前”的顺序传入，验证排序后“AB”优先于“A”被匹配：
+	// - 未排序时："A" 先命中 → stripped="Bfoo" → 返回 bfooCmd。
+	// - 排序后："AB" 先命中 → stripped="foo" → 返回 fooCmd。
+	c.SetGlobalCommandPrefixes([]string{"A", "AB"})
+	actual, pref := c.getCommand("ABfoo")
+	assert.Equal(fooCmd, actual)
+	assert.Equal("ABfoo", pref)
+}
+
+// TestGlobalPrefixesConcurrentAccess 主要依赖 -race 标记运行，验证读写不会发生数据竞争。
+func TestGlobalPrefixesConcurrentAccess(t *testing.T) {
+	c := NewCommandCenter(zap.NewNop())
+	cmd := &testCommand{name: "top", mode: CmdNameModeNormal, splitBySpaceOnly: true}
+	c.Commands["top"] = cmd
+
+	var wg sync.WaitGroup
+	stop := make(chan struct{})
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		toggle := false
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+			}
+			if toggle {
+				c.SetGlobalCommandPrefixes([]string{".", "。"})
+			} else {
+				c.SetGlobalCommandPrefix("!")
+			}
+			toggle = !toggle
+		}
+	}()
+
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 1000; j++ {
+				_, _ = c.getCommand(".top")
+				_, _ = c.getCommand("!top")
+				_, _ = c.getCommand("。top")
+			}
+		}()
+	}
+
+	close(stop)
+	wg.Wait()
 }
