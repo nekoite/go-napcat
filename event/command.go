@@ -45,8 +45,8 @@ type ICommandStopPropagation interface {
 }
 
 type CommandCenter struct {
-	logger       *zap.Logger
-	globalPrefix string
+	logger         *zap.Logger
+	globalPrefixes []string
 
 	Commands       map[string]ICommand
 	PrefixCommands []ICommand
@@ -78,9 +78,23 @@ func (c *CommandCenter) RegisterCommand(command ICommand) {
 
 func (c *CommandCenter) SetGlobalCommandPrefix(prefix string) {
 	if len(prefix) == 0 {
+		c.globalPrefixes = nil
 		return
 	}
-	c.globalPrefix = prefix
+	c.globalPrefixes = []string{prefix}
+}
+
+// SetGlobalCommandPrefixes 设置一组全局命令前缀，命中其中任意一个即可触发命令解析。
+// 传入空切片表示不要求任何前缀。
+func (c *CommandCenter) SetGlobalCommandPrefixes(prefixes []string) {
+	filtered := make([]string, 0, len(prefixes))
+	for _, p := range prefixes {
+		if len(p) == 0 {
+			continue
+		}
+		filtered = append(filtered, p)
+	}
+	c.globalPrefixes = filtered
 }
 
 func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
@@ -124,7 +138,7 @@ func (c *CommandCenter) onMessageRecv(event IMessageEvent) {
 	parseResult.StdOut = stdout.String()
 	parseResult.StdErr = stderr.String()
 	cmd.OnCommand(parseResult)
-	if cmd.(ICommandStopPropagation).StopPropagation() {
+	if sp, ok := cmd.(ICommandStopPropagation); ok && sp.StopPropagation() {
 		event.PreventDefault()
 	}
 }
@@ -134,9 +148,27 @@ func (c *CommandCenter) getCommand(raw string) (ICommand, string) {
 	if len(pref) == 0 {
 		return nil, ""
 	}
-	if c.globalPrefix != "" && strings.HasPrefix(pref, c.globalPrefix) {
-		pref = pref[len(c.globalPrefix):]
+	if len(c.globalPrefixes) == 0 {
+		if cmd, matched := c.matchCommand(pref); cmd != nil {
+			return cmd, matched
+		}
+		return nil, ""
 	}
+	for _, gp := range c.globalPrefixes {
+		if !strings.HasPrefix(pref, gp) {
+			continue
+		}
+		stripped := pref[len(gp):]
+		if cmd, matched := c.matchCommand(stripped); cmd != nil {
+			return cmd, gp + matched
+		}
+	}
+	return nil, ""
+}
+
+// matchCommand 在已经剥离全局前缀的字符串上尝试匹配 prefix 命令和 normal 命令。
+// 返回匹配到的命令以及命中的命令名片段（不含全局前缀）。
+func (c *CommandCenter) matchCommand(pref string) (ICommand, string) {
 	for _, cmd := range c.PrefixCommands {
 		p, _ := cmd.GetName()
 		escapedP := message.EscapeCQString(p)

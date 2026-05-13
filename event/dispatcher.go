@@ -65,6 +65,10 @@ func (d *Dispatcher) SetGlobalCommandPrefix(prefix string) {
 	d.commandCenter.SetGlobalCommandPrefix(prefix)
 }
 
+func (d *Dispatcher) SetGlobalCommandPrefixes(prefixes []string) {
+	d.commandCenter.SetGlobalCommandPrefixes(prefixes)
+}
+
 func (d *Dispatcher) Dispatch(event IEvent) {
 	if event.GetEventType() == EventTypeMessage {
 		e := event.(IMessageEvent)
